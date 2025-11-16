@@ -4,12 +4,14 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 });
 
 export interface Config {
   env: 'development' | 'test' | 'production';
   port: number;
   logLevel: string;
+  databaseUrl: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -23,5 +25,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     env: e.NODE_ENV,
     port: e.PORT,
     logLevel: e.LOG_LEVEL,
+    databaseUrl: e.DATABASE_URL,
   };
 }
