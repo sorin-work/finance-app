@@ -2,6 +2,7 @@ import express from 'express';
 import { pinoHttp } from 'pino-http';
 import type { Database } from './db/types.js';
 import type { Logger } from './lib/logger.js';
+import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 
 export interface AppDeps {
   logger: Logger;
@@ -28,6 +29,9 @@ export function createApp({ logger, db }: AppDeps) {
       res.status(503).json({ status: 'degraded', database: 'down' });
     }
   });
+
+  app.use('/api', notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }
