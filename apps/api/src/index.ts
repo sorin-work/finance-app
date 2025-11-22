@@ -14,7 +14,7 @@ const db = createPostgresDatabase(config.databaseUrl);
 const applied = await migrate(db);
 if (applied.length > 0) logger.info({ migrations: applied }, 'applied migrations');
 
-const app = createApp({ logger, db });
+const app = createApp({ logger, db, config });
 
 const server = app.listen(config.port, () => {
   logger.info({ port: config.port }, 'api listening');
