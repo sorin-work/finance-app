@@ -1,5 +1,7 @@
 import type { Database } from '../../db/types.js';
 import { HttpError, conflict } from '../../lib/errors.js';
+import { CategoriesRepository } from '../categories/categories.repository.js';
+import { DEFAULT_CATEGORIES } from '../categories/defaults.js';
 import { UsersRepository, toUser, type User } from '../users/users.repository.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { hashPassword, verifyPassword } from './password.js';
@@ -11,7 +13,7 @@ export class AuthService {
   private dummyHash?: Promise<string>;
 
   constructor(
-    db: Database,
+    private readonly db: Database,
     private readonly options: { bcryptRounds: number },
   ) {
     this.users = new UsersRepository(db);
@@ -22,11 +24,15 @@ export class AuthService {
       throw conflict('An account with this email already exists');
     }
     const passwordHash = await hashPassword(input.password, this.options.bcryptRounds);
-    const row = await this.users.create({
-      email: input.email,
-      name: input.name,
-      passwordHash,
-      currency: input.currency,
+    const row = await this.db.transaction(async (tx) => {
+      const user = await new UsersRepository(tx).create({
+        email: input.email,
+        name: input.name,
+        passwordHash,
+        currency: input.currency,
+      });
+      await new CategoriesRepository(tx).createMany(user.id, DEFAULT_CATEGORIES);
+      return user;
     });
     return toUser(row);
   }

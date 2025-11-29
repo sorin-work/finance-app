@@ -10,6 +10,8 @@ import { accountsRoutes } from './modules/accounts/accounts.routes.js';
 import { AccountsService } from './modules/accounts/accounts.service.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { AuthService } from './modules/auth/auth.service.js';
+import { categoriesRoutes } from './modules/categories/categories.routes.js';
+import { CategoriesService } from './modules/categories/categories.service.js';
 
 export interface AppDeps {
   logger: Logger;
@@ -45,6 +47,7 @@ export function createApp({ logger, db, config }: AppDeps) {
 
   const authed = requireAuth(config.jwtSecret);
   app.use('/api/accounts', authed, accountsRoutes(new AccountsService(db)));
+  app.use('/api/categories', authed, categoriesRoutes(new CategoriesService(db)));
 
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
