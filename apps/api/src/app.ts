@@ -4,7 +4,10 @@ import { pinoHttp } from 'pino-http';
 import type { Config } from './config.js';
 import type { Database } from './db/types.js';
 import type { Logger } from './lib/logger.js';
+import { requireAuth } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { accountsRoutes } from './modules/accounts/accounts.routes.js';
+import { AccountsService } from './modules/accounts/accounts.service.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { AuthService } from './modules/auth/auth.service.js';
 
@@ -39,6 +42,9 @@ export function createApp({ logger, db, config }: AppDeps) {
 
   const auth = new AuthService(db, { bcryptRounds: config.bcryptRounds });
   app.use('/api/auth', authRoutes(auth, config));
+
+  const authed = requireAuth(config.jwtSecret);
+  app.use('/api/accounts', authed, accountsRoutes(new AccountsService(db)));
 
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
