@@ -12,6 +12,7 @@ export interface TransactionRow {
   id: string;
   user_id: string;
   account_id: string;
+  transfer_account_id: string | null;
   category_id: string | null;
   type: TransactionType;
   amount: number;
@@ -25,6 +26,7 @@ export interface TransactionRow {
 export interface Transaction {
   id: string;
   accountId: string;
+  transferAccountId: string | null;
   categoryId: string | null;
   type: TransactionType;
   amount: number;
@@ -38,6 +40,7 @@ export function toTransaction(row: TransactionRow): Transaction {
   return {
     id: row.id,
     accountId: row.account_id,
+    transferAccountId: row.transfer_account_id,
     categoryId: row.category_id,
     type: row.type,
     amount: row.amount,
@@ -53,12 +56,12 @@ function whereClause(userId: string, filters: TransactionFilters) {
   const params: unknown[] = [userId];
   const add = (sql: string, value: unknown) => {
     params.push(value);
-    conditions.push(sql.replace('?', `$${params.length}`));
+    conditions.push(sql.replaceAll('?', `$${params.length}`));
   };
 
   if (filters.from) add('date >= ?', filters.from);
   if (filters.to) add('date <= ?', filters.to);
-  if (filters.accountId) add('account_id = ?', filters.accountId);
+  if (filters.accountId) add('(account_id = ? OR transfer_account_id = ?)', filters.accountId);
   if (filters.categoryId) add('category_id = ?', filters.categoryId);
   if (filters.type) add('type = ?', filters.type);
 
@@ -100,12 +103,14 @@ export class TransactionsRepository {
 
   async create(userId: string, input: CreateTransactionInput): Promise<TransactionRow> {
     const { rows } = await this.db.query<TransactionRow>(
-      `INSERT INTO transactions (user_id, account_id, category_id, type, amount, date, payee, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO transactions
+         (user_id, account_id, transfer_account_id, category_id, type, amount, date, payee, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         userId,
         input.accountId,
+        input.transferAccountId,
         input.categoryId,
         input.type,
         input.amount,
@@ -125,6 +130,7 @@ export class TransactionsRepository {
     const set = setClause(
       {
         account_id: input.accountId,
+        transfer_account_id: input.transferAccountId,
         category_id: input.categoryId,
         type: input.type,
         amount: input.amount,

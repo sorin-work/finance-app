@@ -52,13 +52,22 @@ export class TransactionsService {
     const existing = await this.transactions.findById(userId, id);
     if (!existing) throw notFound('Transaction');
 
+    const type = input.type ?? existing.type;
+    // Leaving the transfer type drops the destination account automatically.
+    const changes: UpdateTransactionInput =
+      type === 'transfer' ? input : { ...input, transferAccountId: null };
+
     await this.checkReferences(userId, {
-      accountId: input.accountId ?? existing.account_id,
-      categoryId: input.categoryId === undefined ? existing.category_id : input.categoryId,
-      type: input.type ?? existing.type,
+      type,
+      accountId: changes.accountId ?? existing.account_id,
+      transferAccountId:
+        changes.transferAccountId === undefined
+          ? existing.transfer_account_id
+          : changes.transferAccountId,
+      categoryId: changes.categoryId === undefined ? existing.category_id : changes.categoryId,
     });
 
-    const row = await this.transactions.update(userId, id, input);
+    const row = await this.transactions.update(userId, id, changes);
     if (!row) throw notFound('Transaction');
     return toTransaction(row);
   }
@@ -67,13 +76,26 @@ export class TransactionsService {
     if (!(await this.transactions.delete(userId, id))) throw notFound('Transaction');
   }
 
-  /** Makes sure the account and category belong to the user and fit the transaction type. */
+  /** Makes sure the accounts and category belong to the user and fit the transaction type. */
   private async checkReferences(
     userId: string,
-    tx: { accountId: string; categoryId: string | null; type: TransactionType },
+    tx: {
+      accountId: string;
+      transferAccountId: string | null;
+      categoryId: string | null;
+      type: TransactionType;
+    },
   ): Promise<void> {
     if (!(await this.accounts.findById(userId, tx.accountId))) {
       throw badRequest('Unknown account');
+    }
+    if (tx.type === 'transfer') {
+      if (!tx.transferAccountId) throw badRequest('Transfers need a destination account');
+      if (!(await this.accounts.findById(userId, tx.transferAccountId))) {
+        throw badRequest('Unknown destination account');
+      }
+      if (tx.categoryId) throw badRequest('Transfers cannot have a category');
+      return;
     }
     if (tx.categoryId) {
       const category = await this.categories.findById(userId, tx.categoryId);

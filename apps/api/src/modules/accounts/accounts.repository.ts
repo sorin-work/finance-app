@@ -45,7 +45,8 @@ export class AccountsRepository {
 
   /**
    * Current balance of each of the user's accounts: the opening balance plus
-   * income minus expenses. Pass `accountId` to compute a single account.
+   * income and incoming transfers, minus expenses and outgoing transfers.
+   * Pass `accountId` to compute a single account.
    */
   async balances(userId: string, accountId?: string): Promise<Map<string, number>> {
     const { rows } = await this.db.query<{ id: string; balance: number }>(
@@ -54,6 +55,10 @@ export class AccountsRepository {
                 SELECT sum(CASE WHEN t.type = 'income' THEN t.amount ELSE -t.amount END)
                 FROM transactions t
                 WHERE t.account_id = a.id
+              ), 0) + COALESCE((
+                SELECT sum(t.amount)
+                FROM transactions t
+                WHERE t.transfer_account_id = a.id
               ), 0))::bigint AS balance
        FROM accounts a
        WHERE a.user_id = $1 AND ($2::uuid IS NULL OR a.id = $2::uuid)`,

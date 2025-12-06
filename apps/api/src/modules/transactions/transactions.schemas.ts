@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { amountCents, id, isoDate } from '../../lib/validation.js';
 
-export const TRANSACTION_TYPES = ['income', 'expense'] as const;
+export const TRANSACTION_TYPES = ['income', 'expense', 'transfer'] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
 const fields = {
   accountId: id,
+  /** Destination account; only set for transfers. */
+  transferAccountId: id.nullable(),
   categoryId: id.nullable(),
   type: z.enum(TRANSACTION_TYPES),
   amount: amountCents,
@@ -14,12 +16,23 @@ const fields = {
   notes: z.string().trim().max(1000),
 };
 
-export const createTransactionSchema = z.object({
-  ...fields,
-  categoryId: fields.categoryId.default(null),
-  payee: fields.payee.default(''),
-  notes: fields.notes.default(''),
-});
+export const createTransactionSchema = z
+  .object({
+    ...fields,
+    transferAccountId: fields.transferAccountId.default(null),
+    categoryId: fields.categoryId.default(null),
+    payee: fields.payee.default(''),
+    notes: fields.notes.default(''),
+  })
+  .superRefine((tx, ctx) => {
+    if (tx.type === 'transfer' && !tx.transferAccountId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['transferAccountId'],
+        message: 'Transfers need a destination account',
+      });
+    }
+  });
 
 export const updateTransactionSchema = z
   .object(fields)
