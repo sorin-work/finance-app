@@ -40,6 +40,27 @@ describe('accounts routes', () => {
     await agent.get(`/api/accounts/${id}`).expect(404);
   });
 
+  it('computes the balance from the opening balance and transactions', async () => {
+    const { agent } = await signUp(app);
+    const { account } = (
+      await agent.post('/api/accounts').send({ name: 'Main', type: 'checking', openingBalance: 1000_00 })
+    ).body;
+
+    await agent
+      .post('/api/transactions')
+      .send({ accountId: account.id, type: 'income', amount: 2500_00, date: '2025-12-01' })
+      .expect(201);
+    await agent
+      .post('/api/transactions')
+      .send({ accountId: account.id, type: 'expense', amount: 420_50, date: '2025-12-02' })
+      .expect(201);
+
+    const res = await agent.get(`/api/accounts/${account.id}`).expect(200);
+    expect(res.body.account.balance).toBe(1000_00 + 2500_00 - 420_50);
+    const list = await agent.get('/api/accounts').expect(200);
+    expect(list.body.accounts[0].balance).toBe(3079_50);
+  });
+
   it('does not expose other users accounts', async () => {
     const alice = await signUp(app);
     const bob = await signUp(app);
