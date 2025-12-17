@@ -1,20 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router';
-import { useAuth } from './auth/AuthContext';
 import { GuestOnly, RequireAuth } from './auth/guards';
+import { Layout } from './components/Layout';
+import { PageHeader } from './components/PageHeader';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
-function Home() {
-  const { user, logout } = useAuth();
-  return (
-    <main className="placeholder">
-      <h1>Hi, {user?.name}</h1>
-      <p>Your dashboard is on its way.</p>
-      <button className="button" onClick={() => void logout()}>
-        Sign out
-      </button>
-    </main>
-  );
+function ComingSoon({ title }: { title: string }) {
+  return <PageHeader title={title} description="Coming soon." />;
 }
 
 export function App() {
@@ -37,13 +29,17 @@ export function App() {
         }
       />
       <Route
-        path="/"
         element={
           <RequireAuth>
-            <Home />
+            <Layout />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<ComingSoon title="Dashboard" />} />
+        <Route path="transactions" element={<ComingSoon title="Transactions" />} />
+        <Route path="accounts" element={<ComingSoon title="Accounts" />} />
+        <Route path="settings" element={<ComingSoon title="Settings" />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
