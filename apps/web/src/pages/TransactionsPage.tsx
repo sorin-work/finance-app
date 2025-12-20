@@ -1,0 +1,218 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router';
+import { fetchTransactions, type TransactionFilters } from '../api/transactions';
+import type { Transaction, TransactionType } from '../api/types';
+import { useUser } from '../auth/AuthContext';
+import { PageHeader } from '../components/PageHeader';
+import { useAccounts } from '../hooks/useAccounts';
+import { useCategories } from '../hooks/useCategories';
+import { formatDate } from '../lib/dates';
+import { formatMoney } from '../lib/money';
+
+const PAGE_SIZE = 25;
+const FILTER_KEYS = ['from', 'to', 'accountId', 'categoryId', 'type'] as const;
+
+export function TransactionsPage() {
+  const { currency } = useUser();
+  const [params, setParams] = useSearchParams();
+  const accounts = useAccounts();
+  const categories = useCategories();
+
+  const filters: TransactionFilters = {
+    from: params.get('from') ?? undefined,
+    to: params.get('to') ?? undefined,
+    accountId: params.get('accountId') ?? undefined,
+    categoryId: params.get('categoryId') ?? undefined,
+    type: (params.get('type') as TransactionType | null) ?? undefined,
+    page: Number(params.get('page') ?? 1),
+    pageSize: PAGE_SIZE,
+  };
+
+  const transactions = useQuery({
+    queryKey: ['transactions', filters],
+    queryFn: () => fetchTransactions(filters),
+    placeholderData: keepPreviousData,
+  });
+
+  const accountName = useMemo(
+    () => new Map((accounts.data ?? []).map((a) => [a.id, a.name])),
+    [accounts.data],
+  );
+  const categoryById = useMemo(
+    () => new Map((categories.data ?? []).map((c) => [c.id, c])),
+    [categories.data],
+  );
+
+  function setFilter(key: (typeof FILTER_KEYS)[number], value: string) {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.delete('page');
+    setParams(next);
+  }
+
+  function goToPage(page: number) {
+    setParams({ page: String(page) });
+  }
+
+  const data = transactions.data;
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const hasFilters = FILTER_KEYS.some((key) => params.has(key));
+
+  function signedAmount(t: Transaction) {
+    if (t.type === 'transfer') return formatMoney(t.amount, currency);
+    return formatMoney(t.type === 'income' ? t.amount : -t.amount, currency, {
+      signDisplay: 'always',
+    });
+  }
+
+  return (
+    <>
+      <PageHeader title="Transactions" description="Everything coming in and going out." />
+
+      <div className="card filters">
+        <label>
+          From
+          <input
+            type="date"
+            value={filters.from ?? ''}
+            onChange={(e) => setFilter('from', e.target.value)}
+          />
+        </label>
+        <label>
+          To
+          <input
+            type="date"
+            value={filters.to ?? ''}
+            onChange={(e) => setFilter('to', e.target.value)}
+          />
+        </label>
+        <label>
+          Account
+          <select
+            value={filters.accountId ?? ''}
+            onChange={(e) => setFilter('accountId', e.target.value)}
+          >
+            <option value="">All accounts</option>
+            {accounts.data?.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Category
+          <select
+            value={filters.categoryId ?? ''}
+            onChange={(e) => setFilter('categoryId', e.target.value)}
+          >
+            <option value="">All categories</option>
+            {categories.data?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Type
+          <select value={filters.type ?? ''} onChange={(e) => setFilter('type', e.target.value)}>
+            <option value="">Any type</option>
+            <option value="expense">Expenses</option>
+            <option value="income">Income</option>
+            <option value="transfer">Transfers</option>
+          </select>
+        </label>
+        {hasFilters && (
+          <button className="button filters__clear" onClick={() => setParams({})}>
+            Clear
+          </button>
+        )}
+      </div>
+
+      {transactions.isError && (
+        <div className="alert alert--error">Could not load transactions.</div>
+      )}
+
+      <div className="card table-card">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Account</th>
+              <th className="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.items.map((t) => {
+              const category = t.categoryId ? categoryById.get(t.categoryId) : undefined;
+              return (
+                <tr key={t.id}>
+                  <td className="nowrap">{formatDate(t.date)}</td>
+                  <td>
+                    <div className="cell-title">
+                      {t.payee || (t.type === 'transfer' ? 'Transfer' : '—')}
+                    </div>
+                    {t.notes && <div className="cell-sub">{t.notes}</div>}
+                  </td>
+                  <td>
+                    {category ? (
+                      <span className="chip">
+                        <span className="chip__dot" style={{ background: category.color }} />
+                        {category.name}
+                      </span>
+                    ) : (
+                      <span className="muted">{t.type === 'transfer' ? '—' : 'Uncategorized'}</span>
+                    )}
+                  </td>
+                  <td className="nowrap">
+                    {accountName.get(t.accountId)}
+                    {t.transferAccountId && ` → ${accountName.get(t.transferAccountId)}`}
+                  </td>
+                  <td
+                    className={`num nowrap ${t.type === 'income' ? 'positive' : t.type === 'expense' ? 'negative' : ''}`}
+                  >
+                    {signedAmount(t)}
+                  </td>
+                </tr>
+              );
+            })}
+            {data && data.items.length === 0 && (
+              <tr>
+                <td colSpan={5} className="table__empty">
+                  {hasFilters ? 'No transactions match these filters.' : 'No transactions yet.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {data && data.total > PAGE_SIZE && (
+        <nav className="pagination" aria-label="Pagination">
+          <button
+            className="button"
+            disabled={data.page <= 1}
+            onClick={() => goToPage(data.page - 1)}
+          >
+            Previous
+          </button>
+          <span className="muted">
+            Page {data.page} of {totalPages} · {data.total} transactions
+          </span>
+          <button
+            className="button"
+            disabled={data.page >= totalPages}
+            onClick={() => goToPage(data.page + 1)}
+          >
+            Next
+          </button>
+        </nav>
+      )}
+    </>
+  );
+}

@@ -5,6 +5,7 @@ import { PageHeader } from './components/PageHeader';
 import { AccountsPage } from './pages/AccountsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { TransactionsPage } from './pages/TransactionsPage';
 
 function ComingSoon({ title }: { title: string }) {
   return <PageHeader title={title} description="Coming soon." />;
@@ -37,7 +38,7 @@ export function App() {
         }
       >
         <Route index element={<ComingSoon title="Dashboard" />} />
-        <Route path="transactions" element={<ComingSoon title="Transactions" />} />
+        <Route path="transactions" element={<TransactionsPage />} />
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="settings" element={<ComingSoon title="Settings" />} />
       </Route>
