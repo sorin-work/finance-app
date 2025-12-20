@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 import { GuestOnly, RequireAuth } from './auth/guards';
 import { Layout } from './components/Layout';
 import { PageHeader } from './components/PageHeader';
+import { AccountsPage } from './pages/AccountsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -37,7 +38,7 @@ export function App() {
       >
         <Route index element={<ComingSoon title="Dashboard" />} />
         <Route path="transactions" element={<ComingSoon title="Transactions" />} />
-        <Route path="accounts" element={<ComingSoon title="Accounts" />} />
+        <Route path="accounts" element={<AccountsPage />} />
         <Route path="settings" element={<ComingSoon title="Settings" />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
