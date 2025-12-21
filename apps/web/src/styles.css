@@ -647,3 +647,51 @@ textarea {
   margin-top: 14px;
   font-size: 14px;
 }
+
+.table__row--clickable {
+  cursor: pointer;
+}
+
+.table__row--clickable:hover td {
+  background: var(--surface-muted);
+}
+
+/* Form layout */
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-actions__left {
+  margin-right: auto;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.segmented__option {
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented__option--active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}

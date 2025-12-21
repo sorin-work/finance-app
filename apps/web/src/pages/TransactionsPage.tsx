@@ -1,10 +1,22 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { fetchTransactions, type TransactionFilters } from '../api/transactions';
+import { ApiError } from '../api/client';
+import {
+  createTransaction,
+  deleteTransaction,
+  fetchTransactions,
+  updateTransaction,
+  type TransactionFilters,
+  type TransactionInput,
+} from '../api/transactions';
 import type { Transaction, TransactionType } from '../api/types';
 import { useUser } from '../auth/AuthContext';
+import { PlusIcon } from '../components/icons';
+import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
+import { TransactionForm } from '../components/TransactionForm';
+import { invalidateFinancialData } from '../hooks/invalidate';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCategories } from '../hooks/useCategories';
 import { formatDate } from '../lib/dates';
@@ -13,11 +25,15 @@ import { formatMoney } from '../lib/money';
 const PAGE_SIZE = 25;
 const FILTER_KEYS = ['from', 'to', 'accountId', 'categoryId', 'type'] as const;
 
+type Editing = { mode: 'create' } | { mode: 'edit'; transaction: Transaction } | null;
+
 export function TransactionsPage() {
   const { currency } = useUser();
   const [params, setParams] = useSearchParams();
   const accounts = useAccounts();
   const categories = useCategories();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<Editing>(null);
 
   const filters: TransactionFilters = {
     from: params.get('from') ?? undefined,
@@ -34,6 +50,36 @@ export function TransactionsPage() {
     queryFn: () => fetchTransactions(filters),
     placeholderData: keepPreviousData,
   });
+
+  const save = useMutation({
+    mutationFn: (input: TransactionInput) =>
+      editing?.mode === 'edit'
+        ? updateTransaction(editing.transaction.id, input)
+        : createTransaction(input),
+    onSuccess: () => {
+      void invalidateFinancialData(queryClient);
+      setEditing(null);
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: deleteTransaction,
+    onSuccess: () => {
+      void invalidateFinancialData(queryClient);
+      setEditing(null);
+    },
+  });
+
+  function closeModal() {
+    save.reset();
+    setEditing(null);
+  }
+
+  function confirmDelete(transaction: Transaction) {
+    if (window.confirm('Delete this transaction? This cannot be undone.')) {
+      remove.mutate(transaction.id);
+    }
+  }
 
   const accountName = useMemo(
     () => new Map((accounts.data ?? []).map((a) => [a.id, a.name])),
@@ -69,7 +115,20 @@ export function TransactionsPage() {
 
   return (
     <>
-      <PageHeader title="Transactions" description="Everything coming in and going out." />
+      <PageHeader
+        title="Transactions"
+        description="Everything coming in and going out."
+        actions={
+          <button
+            className="button button--primary"
+            onClick={() => setEditing({ mode: 'create' })}
+            disabled={!accounts.data?.length}
+            title={accounts.data?.length ? undefined : 'Add an account first'}
+          >
+            <PlusIcon /> Add transaction
+          </button>
+        }
+      />
 
       <div className="card filters">
         <label>
@@ -151,7 +210,11 @@ export function TransactionsPage() {
             {data?.items.map((t) => {
               const category = t.categoryId ? categoryById.get(t.categoryId) : undefined;
               return (
-                <tr key={t.id}>
+                <tr
+                  key={t.id}
+                  className="table__row--clickable"
+                  onClick={() => setEditing({ mode: 'edit', transaction: t })}
+                >
                   <td className="nowrap">{formatDate(t.date)}</td>
                   <td>
                     <div className="cell-title">
@@ -212,6 +275,26 @@ export function TransactionsPage() {
             Next
           </button>
         </nav>
+      )}
+
+      {editing && accounts.data && categories.data && (
+        <Modal
+          title={editing.mode === 'edit' ? 'Edit transaction' : 'New transaction'}
+          onClose={closeModal}
+        >
+          <TransactionForm
+            transaction={editing.mode === 'edit' ? editing.transaction : undefined}
+            accounts={accounts.data}
+            categories={categories.data}
+            submitting={save.isPending}
+            error={save.error instanceof ApiError ? save.error.message : null}
+            onSubmit={(input) => save.mutate(input)}
+            onCancel={closeModal}
+            onDelete={
+              editing.mode === 'edit' ? () => confirmDelete(editing.transaction) : undefined
+            }
+          />
+        </Modal>
       )}
     </>
   );
