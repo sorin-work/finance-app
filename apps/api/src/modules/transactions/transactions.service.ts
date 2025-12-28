@@ -91,6 +91,9 @@ export class TransactionsService {
     }
     if (tx.type === 'transfer') {
       if (!tx.transferAccountId) throw badRequest('Transfers need a destination account');
+      if (tx.transferAccountId === tx.accountId) {
+        throw badRequest('Cannot transfer money to the same account');
+      }
       if (!(await this.accounts.findById(userId, tx.transferAccountId))) {
         throw badRequest('Unknown destination account');
       }

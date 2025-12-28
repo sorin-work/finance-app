@@ -238,6 +238,34 @@ describe('transactions routes', () => {
         .expect(400);
     });
 
+    it('rejects transfers to the same account', async () => {
+      const res = await agent.post('/api/transactions').send({
+        accountId: checking,
+        transferAccountId: checking,
+        type: 'transfer',
+        amount: 100_00,
+        date: '2025-12-02',
+      });
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toBe('Cannot transfer money to the same account');
+    });
+
+    it('rejects editing a transfer so both sides are the same account', async () => {
+      const { transaction } = (
+        await agent.post('/api/transactions').send({
+          accountId: checking,
+          transferAccountId: savings,
+          type: 'transfer',
+          amount: 100_00,
+          date: '2025-12-02',
+        })
+      ).body;
+      await agent
+        .patch(`/api/transactions/${transaction.id}`)
+        .send({ accountId: savings })
+        .expect(400);
+    });
+
     it('drops the destination when a transfer becomes an expense', async () => {
       const { transaction } = (
         await agent.post('/api/transactions').send({
