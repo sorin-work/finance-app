@@ -10,6 +10,8 @@ import { accountsRoutes } from './modules/accounts/accounts.routes.js';
 import { AccountsService } from './modules/accounts/accounts.service.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { AuthService } from './modules/auth/auth.service.js';
+import { budgetsRoutes } from './modules/budgets/budgets.routes.js';
+import { BudgetsService } from './modules/budgets/budgets.service.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { CategoriesService } from './modules/categories/categories.service.js';
 import { transactionsRoutes } from './modules/transactions/transactions.routes.js';
@@ -51,6 +53,7 @@ export function createApp({ logger, db, config }: AppDeps) {
   app.use('/api/accounts', authed, accountsRoutes(new AccountsService(db)));
   app.use('/api/categories', authed, categoriesRoutes(new CategoriesService(db)));
   app.use('/api/transactions', authed, transactionsRoutes(new TransactionsService(db)));
+  app.use('/api/budgets', authed, budgetsRoutes(new BudgetsService(db)));
 
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
