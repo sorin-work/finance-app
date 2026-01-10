@@ -9,7 +9,7 @@ export function budgetsRoutes(budgets: BudgetsService): Router {
 
   router.get('/', async (req, res) => {
     const { month } = budgetsQuery.parse(req.query);
-    res.json({ month, budgets: await budgets.listForMonth(currentUserId(req), month) });
+    res.json(await budgets.forMonth(currentUserId(req), month));
   });
 
   router.put('/', async (req, res) => {

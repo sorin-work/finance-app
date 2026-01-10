@@ -93,6 +93,22 @@ export class TransactionsRepository {
     return { rows, total: count.rows[0]?.total ?? 0 };
   }
 
+  /** Total expenses per category between two dates. Uncategorized spending is keyed by null. */
+  async spendingByCategory(
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<Map<string | null, number>> {
+    const { rows } = await this.db.query<{ category_id: string | null; spent: number }>(
+      `SELECT category_id, sum(amount)::bigint AS spent
+       FROM transactions
+       WHERE user_id = $1 AND type = 'expense' AND date >= $2 AND date < $3
+       GROUP BY category_id`,
+      [userId, from, to],
+    );
+    return new Map(rows.map((r) => [r.category_id, r.spent]));
+  }
+
   async findById(userId: string, id: string): Promise<TransactionRow | null> {
     const { rows } = await this.db.query<TransactionRow>(
       'SELECT * FROM transactions WHERE user_id = $1 AND id = $2',
