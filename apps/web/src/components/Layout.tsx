@@ -1,7 +1,14 @@
 import type { ComponentType, SVGProps } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { useAuth, useUser } from '../auth/AuthContext';
-import { DashboardIcon, ListIcon, LogoutIcon, SettingsIcon, WalletIcon } from './icons';
+import {
+  DashboardIcon,
+  ListIcon,
+  LogoutIcon,
+  PieIcon,
+  SettingsIcon,
+  WalletIcon,
+} from './icons';
 
 interface NavItem {
   to: string;
@@ -13,6 +20,7 @@ const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon },
   { to: '/transactions', label: 'Transactions', icon: ListIcon },
   { to: '/accounts', label: 'Accounts', icon: WalletIcon },
+  { to: '/budgets', label: 'Budgets', icon: PieIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 

@@ -3,6 +3,7 @@ import { GuestOnly, RequireAuth } from './auth/guards';
 import { Layout } from './components/Layout';
 import { PageHeader } from './components/PageHeader';
 import { AccountsPage } from './pages/AccountsPage';
+import { BudgetsPage } from './pages/BudgetsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -41,6 +42,7 @@ export function App() {
         <Route index element={<ComingSoon title="Dashboard" />} />
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="accounts" element={<AccountsPage />} />
+        <Route path="budgets" element={<BudgetsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

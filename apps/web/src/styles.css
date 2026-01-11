@@ -765,3 +765,141 @@ textarea {
 .add-category input {
   flex: 1;
 }
+
+/* Progress */
+
+.progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.progress--success .progress__fill {
+  background: #22c55e;
+}
+
+.progress--warning .progress__fill {
+  background: #f59e0b;
+}
+
+.progress--danger .progress__fill {
+  background: #ef4444;
+}
+
+/* Month picker */
+
+.month-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.month-picker .icon-button {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.month-picker__label {
+  min-width: 132px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Budgets */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.budget-list {
+  margin: 0 0 20px;
+  padding: 6px 20px;
+  list-style: none;
+}
+
+.budget-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.budget-row:last-child {
+  border-bottom: 0;
+}
+
+.budget-row__head,
+.budget-row__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.budget-row__foot {
+  font-size: 13px;
+}
+
+.budget-row__amounts {
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-row__edit {
+  display: flex;
+  gap: 6px;
+}
+
+.budget-row__edit input {
+  width: 120px;
+}
+
+.budget-row__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.link-button--danger {
+  color: var(--danger);
+}
+
+.add-budget h2 {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.add-budget__fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 8px;
+}

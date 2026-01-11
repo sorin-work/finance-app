@@ -44,6 +44,13 @@ export const WalletIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const PieIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+    <path d="M22 12A10 10 0 0 0 12 2v10Z" />
+  </Icon>
+);
+
 export const SettingsIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="12" cy="12" r="3" />
