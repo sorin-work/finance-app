@@ -4,7 +4,7 @@ import { badRequest, notFound } from '../../lib/errors.js';
 import { CategoriesRepository } from '../categories/categories.repository.js';
 import { TransactionsRepository } from '../transactions/transactions.repository.js';
 import { BudgetsRepository, type BudgetRow } from './budgets.repository.js';
-import type { UpsertBudgetInput } from './budgets.schemas.js';
+import type { CopyBudgetsInput, UpsertBudgetInput } from './budgets.schemas.js';
 import { budgetProgress, budgetTotals, type BudgetProgress, type BudgetTotals } from './progress.js';
 
 export interface Budget {
@@ -63,6 +63,12 @@ export class BudgetsService {
     if (!category) throw badRequest('Unknown category');
     if (category.kind !== 'expense') throw badRequest('Budgets can only be set on expense categories');
     return toBudget(await this.budgets.upsert(userId, input));
+  }
+
+  /** Starts a month from the previous plan, e.g. copying December's budgets into January. */
+  async copy(userId: string, input: CopyBudgetsInput): Promise<{ copied: number }> {
+    const copied = await this.budgets.copyMonth(userId, input.from, input.to, input.overwrite);
+    return { copied };
   }
 
   async delete(userId: string, id: string): Promise<void> {

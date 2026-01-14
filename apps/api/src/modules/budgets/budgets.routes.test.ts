@@ -104,6 +104,53 @@ describe('budgets routes', () => {
     expect(res.body.budgets[0].spent).toBe(20_00);
   });
 
+  describe('copy', () => {
+    beforeEach(async () => {
+      for (const [name, amount] of [
+        ['Groceries', 400_00],
+        ['Housing', 1200_00],
+      ] as const) {
+        await agent
+          .put('/api/budgets')
+          .send({ categoryId: category(name), month: '2025-12', amount })
+          .expect(200);
+      }
+    });
+
+    it("copies last month's budgets into an empty month", async () => {
+      const res = await agent
+        .post('/api/budgets/copy')
+        .send({ from: '2025-12', to: '2026-01' })
+        .expect(200);
+      expect(res.body).toEqual({ copied: 2 });
+
+      const january = await agent.get('/api/budgets?month=2026-01');
+      expect(january.body.totals.budgeted).toBe(1600_00);
+    });
+
+    it('keeps budgets that already exist unless asked to overwrite', async () => {
+      await agent
+        .put('/api/budgets')
+        .send({ categoryId: category('Groceries'), month: '2026-01', amount: 500_00 });
+
+      const skipped = await agent.post('/api/budgets/copy').send({ from: '2025-12', to: '2026-01' });
+      expect(skipped.body.copied).toBe(1);
+      let january = await agent.get('/api/budgets?month=2026-01');
+      expect(january.body.totals.budgeted).toBe(1700_00);
+
+      await agent
+        .post('/api/budgets/copy')
+        .send({ from: '2025-12', to: '2026-01', overwrite: true })
+        .expect(200);
+      january = await agent.get('/api/budgets?month=2026-01');
+      expect(january.body.totals.budgeted).toBe(1600_00);
+    });
+
+    it('rejects copying a month onto itself', async () => {
+      await agent.post('/api/budgets/copy').send({ from: '2025-12', to: '2025-12' }).expect(400);
+    });
+  });
+
   it('rejects budgets on income categories', async () => {
     const res = await agent
       .put('/api/budgets')

@@ -41,6 +41,22 @@ export class BudgetsRepository {
     return rows[0]!;
   }
 
+  /** Copies every budget of one month into another. Returns how many were written. */
+  async copyMonth(userId: string, from: string, to: string, overwrite: boolean): Promise<number> {
+    const onConflict = overwrite
+      ? 'DO UPDATE SET amount = EXCLUDED.amount, updated_at = now()'
+      : 'DO NOTHING';
+    const { rowCount } = await this.db.query(
+      `INSERT INTO budgets (user_id, category_id, month, amount)
+       SELECT user_id, category_id, $3, amount
+       FROM budgets
+       WHERE user_id = $1 AND month = $2
+       ON CONFLICT (user_id, category_id, month) ${onConflict}`,
+      [userId, firstDay(from), firstDay(to)],
+    );
+    return rowCount;
+  }
+
   async delete(userId: string, id: string): Promise<boolean> {
     const { rowCount } = await this.db.query('DELETE FROM budgets WHERE user_id = $1 AND id = $2', [
       userId,
