@@ -27,6 +27,10 @@ export function saveBudget(input: { categoryId: string; month: string; amount: n
   return api.put<{ budget: Budget }>('/budgets', input);
 }
 
+export function copyBudgets(from: string, to: string): Promise<{ copied: number }> {
+  return api.post<{ copied: number }>('/budgets/copy', { from, to });
+}
+
 export function deleteBudget(id: string): Promise<void> {
   return api.delete(`/budgets/${id}`);
 }

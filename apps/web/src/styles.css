@@ -401,6 +401,10 @@ textarea {
   margin: 6px 0 0;
 }
 
+.empty-state__action {
+  margin-top: 16px;
+}
+
 .stat {
   display: flex;
   flex-direction: column;

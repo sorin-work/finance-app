@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
-import { deleteBudget, fetchBudgets, saveBudget, type Budget } from '../api/budgets';
+import {
+  copyBudgets,
+  deleteBudget,
+  fetchBudgets,
+  saveBudget,
+  type Budget,
+} from '../api/budgets';
 import { ApiError } from '../api/client';
 import type { Category } from '../api/types';
 import { useUser } from '../auth/AuthContext';
@@ -9,7 +15,7 @@ import { MonthPicker } from '../components/MonthPicker';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
 import { useCategories } from '../hooks/useCategories';
-import { currentMonth } from '../lib/dates';
+import { currentMonth, formatMonth, shiftMonth } from '../lib/dates';
 import { centsToInput, formatMoney, parseMoneyInput } from '../lib/money';
 
 const TONE = { on_track: 'success', warning: 'warning', over: 'danger' } as const;
@@ -164,7 +170,14 @@ export function BudgetsPage() {
   const [params, setParams] = useSearchParams();
   const month = params.get('month') ?? currentMonth();
   const categories = useCategories();
+  const queryClient = useQueryClient();
   const budgets = useQuery({ queryKey: ['budgets', month], queryFn: () => fetchBudgets(month) });
+  const previousMonth = shiftMonth(month, -1);
+
+  const copy = useMutation({
+    mutationFn: () => copyBudgets(previousMonth, month),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+  });
 
   const categoryById = new Map((categories.data ?? []).map((c) => [c.id, c]));
   const budgeted = new Set(budgets.data?.budgets.map((b) => b.categoryId));
@@ -208,6 +221,16 @@ export function BudgetsPage() {
         <div className="card empty-state">
           <h2>No budgets for this month</h2>
           <p className="muted">Pick a category below and set a monthly limit.</p>
+          <button
+            className="button empty-state__action"
+            onClick={() => copy.mutate()}
+            disabled={copy.isPending}
+          >
+            Copy budgets from {formatMonth(previousMonth)}
+          </button>
+          {copy.data?.copied === 0 && (
+            <p className="muted">{formatMonth(previousMonth)} has no budgets to copy.</p>
+          )}
         </div>
       )}
 
