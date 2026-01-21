@@ -14,6 +14,8 @@ import { budgetsRoutes } from './modules/budgets/budgets.routes.js';
 import { BudgetsService } from './modules/budgets/budgets.service.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { CategoriesService } from './modules/categories/categories.service.js';
+import { reportsRoutes } from './modules/reports/reports.routes.js';
+import { ReportsService } from './modules/reports/reports.service.js';
 import { transactionsRoutes } from './modules/transactions/transactions.routes.js';
 import { TransactionsService } from './modules/transactions/transactions.service.js';
 
@@ -54,6 +56,7 @@ export function createApp({ logger, db, config }: AppDeps) {
   app.use('/api/categories', authed, categoriesRoutes(new CategoriesService(db)));
   app.use('/api/transactions', authed, transactionsRoutes(new TransactionsService(db)));
   app.use('/api/budgets', authed, budgetsRoutes(new BudgetsService(db)));
+  app.use('/api/reports', authed, reportsRoutes(new ReportsService(db)));
 
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
