@@ -31,3 +31,13 @@ export function centsToInput(cents: number): string {
   const abs = Math.abs(cents);
   return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
 }
+
+/** Short labels for chart axes: 1250000 -> "$12.5K". */
+export function formatCompactMoney(cents: number, currency: string, locale?: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(cents / 100);
+}

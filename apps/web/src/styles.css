@@ -1019,3 +1019,34 @@ textarea {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* Charts */
+
+.donut {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.donut__center strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.recharts-legend-item-text {
+  color: var(--text-muted) !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: var(--text-muted);
+}

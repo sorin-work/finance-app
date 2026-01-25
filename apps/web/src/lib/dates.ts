@@ -37,3 +37,13 @@ export function formatMonth(month: string, locale?: string): string {
     timeZone: 'UTC',
   }).format(new Date(`${month}-01T00:00:00Z`));
 }
+
+/** "2026-01" -> "Jan" (with the year when it is not the current one: "Dec 25"). */
+export function formatMonthShort(month: string, locale?: string, now: Date = new Date()): string {
+  const sameYear = month.startsWith(String(now.getFullYear()));
+  return new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    ...(sameYear ? {} : { year: '2-digit' }),
+    timeZone: 'UTC',
+  }).format(new Date(`${month}-01T00:00:00Z`));
+}

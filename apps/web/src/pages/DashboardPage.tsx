@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { fetchBudgets } from '../api/budgets';
-import { fetchSummary } from '../api/reports';
+import { fetchCashflow, fetchSummary } from '../api/reports';
 import { fetchTransactions } from '../api/transactions';
 import { useUser } from '../auth/AuthContext';
+import { CashflowChart } from '../components/charts/CashflowChart';
+import { SpendingDonut } from '../components/charts/SpendingDonut';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
 import { useAccounts } from '../hooks/useAccounts';
@@ -27,6 +29,10 @@ export function DashboardPage() {
   const categories = useCategories();
   const summary = useQuery({ queryKey: ['reports', 'summary', month], queryFn: () => fetchSummary(month) });
   const budgets = useQuery({ queryKey: ['budgets', month], queryFn: () => fetchBudgets(month) });
+  const cashflow = useQuery({
+    queryKey: ['reports', 'cashflow', month, 6],
+    queryFn: () => fetchCashflow(month, 6),
+  });
   const recent = useQuery({
     queryKey: ['transactions', { page: 1, pageSize: 6 }],
     queryFn: () => fetchTransactions({ page: 1, pageSize: 6 }),
@@ -80,6 +86,13 @@ export function DashboardPage() {
           {summary.data && summary.data.byCategory.length === 0 && (
             <p className="muted">No spending recorded this month yet.</p>
           )}
+          {summary.data && summary.data.byCategory.length > 0 && (
+            <SpendingDonut
+              data={summary.data.byCategory}
+              currency={user.currency}
+              total={summary.data.expenses}
+            />
+          )}
           <ul className="breakdown">
             {summary.data?.byCategory.slice(0, 6).map((row) => (
               <li key={row.categoryId ?? 'none'} className="breakdown__row">
@@ -126,6 +139,14 @@ export function DashboardPage() {
               );
             })}
           </ul>
+        </section>
+
+        <section className="card dashboard-grid__wide">
+          <div className="card__header">
+            <h2>Cash flow</h2>
+            <span className="muted">Last 6 months</span>
+          </div>
+          {cashflow.data && <CashflowChart data={cashflow.data} currency={user.currency} />}
         </section>
 
         <section className="card dashboard-grid__wide">
