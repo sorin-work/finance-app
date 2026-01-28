@@ -15,7 +15,7 @@ export class ReportsRepository {
       `SELECT COALESCE(sum(amount) FILTER (WHERE type = 'income'), 0)::bigint AS income,
               COALESCE(sum(amount) FILTER (WHERE type = 'expense'), 0)::bigint AS expenses
        FROM transactions
-       WHERE user_id = $1 AND date >= $2 AND date < $3`,
+       WHERE user_id = $1 AND date >= $2 AND date <= $3`,
       [userId, from, to],
     );
     return rows[0] ?? { income: 0, expenses: 0 };

@@ -102,7 +102,7 @@ export class TransactionsRepository {
     const { rows } = await this.db.query<{ category_id: string | null; spent: number }>(
       `SELECT category_id, sum(amount)::bigint AS spent
        FROM transactions
-       WHERE user_id = $1 AND type = 'expense' AND date >= $2 AND date < $3
+       WHERE user_id = $1 AND type = 'expense' AND date >= $2 AND date <= $3
        GROUP BY category_id`,
       [userId, from, to],
     );

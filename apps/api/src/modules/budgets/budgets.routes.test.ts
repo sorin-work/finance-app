@@ -151,6 +151,17 @@ describe('budgets routes', () => {
     });
   });
 
+  it('counts spending on the first and last day of the month', async () => {
+    await agent
+      .put('/api/budgets')
+      .send({ categoryId: category('Groceries'), month: '2026-01', amount: 200_00 });
+    await spend(11_00, '2026-01-01');
+    await spend(22_00, '2026-01-31');
+
+    const res = await agent.get('/api/budgets?month=2026-01');
+    expect(res.body.budgets[0].spent).toBe(33_00);
+  });
+
   it('rejects budgets on income categories', async () => {
     const res = await agent
       .put('/api/budgets')
