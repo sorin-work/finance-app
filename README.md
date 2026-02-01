@@ -42,7 +42,14 @@ nginx) in one command.
 docker compose up --build
 ```
 
-Then open http://localhost:8080.
+Then open http://localhost:8080 and sign in with the demo account:
+
+- **Email:** `demo@example.com`
+- **Password:** `demo-password`
+
+The demo user is created on first start with a year of transactions, five
+accounts and budgets for the last few months. Set `SEED_DEMO=false` to start
+with an empty database instead.
 
 | Service | URL / port              | Notes                                    |
 | ------- | ----------------------- | ---------------------------------------- |
@@ -73,6 +80,7 @@ Run from the repository root:
 | `npm run typecheck` | TypeScript checks for both apps           |
 | `npm run lint`      | ESLint                                    |
 | `npm run build`     | Production builds (`apps/*/dist`)         |
+| `npm run seed -w apps/api` | Create the demo user and sample data |
 
 ## Project layout
 

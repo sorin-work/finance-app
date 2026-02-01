@@ -15,7 +15,8 @@ function wrap(conn: PgliteConnection): Queryable {
   return {
     async query<T>(text: string, params?: unknown[]) {
       const result = await conn.query<T>(text, params);
-      return { rows: result.rows, rowCount: result.affectedRows ?? result.rows.length };
+      // node-postgres reports the number of rows for SELECT too; PGlite reports 0.
+      return { rows: result.rows, rowCount: result.affectedRows || result.rows.length };
     },
     async exec(sql: string) {
       await conn.exec(sql);

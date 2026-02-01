@@ -25,6 +25,8 @@ services:
       DATABASE_URL: postgres://finance:finance@db:5432/finance
       JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me-0123456789}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Creates demo@example.com / demo-password with a year of sample data.
+      SEED_DEMO: ${SEED_DEMO:-true}
     depends_on:
       db:
         condition: service_healthy

@@ -13,6 +13,7 @@ export const testConfig: Config = {
   sessionTtlDays: 7,
   cookieSecure: false,
   bcryptRounds: 4,
+  seedDemo: false,
 };
 
 export function buildTestApp(db: Database, overrides: Partial<Config> = {}) {

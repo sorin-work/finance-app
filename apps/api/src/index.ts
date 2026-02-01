@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { migrate } from './db/migrate.js';
 import { createPostgresDatabase } from './db/postgres.js';
 import { createLogger } from './lib/logger.js';
+import { DEMO_EMAIL, seedDemoData } from './seed/demo.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 
@@ -13,6 +14,10 @@ const db = createPostgresDatabase(config.databaseUrl);
 
 const applied = await migrate(db);
 if (applied.length > 0) logger.info({ migrations: applied }, 'applied migrations');
+
+if (config.seedDemo && (await seedDemoData(db, { bcryptRounds: config.bcryptRounds }))) {
+  logger.info({ email: DEMO_EMAIL }, 'created demo user and sample data');
+}
 
 const app = createApp({ logger, db, config });
 

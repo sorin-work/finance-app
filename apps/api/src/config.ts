@@ -12,6 +12,10 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+  SEED_DEMO: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export interface Config {
@@ -23,6 +27,8 @@ export interface Config {
   sessionTtlDays: number;
   cookieSecure: boolean;
   bcryptRounds: number;
+  /** Create the demo user and sample data on startup if it does not exist yet. */
+  seedDemo: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -41,5 +47,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     sessionTtlDays: e.SESSION_TTL_DAYS,
     cookieSecure: e.COOKIE_SECURE,
     bcryptRounds: e.BCRYPT_ROUNDS,
+    seedDemo: e.SEED_DEMO,
   };
 }
