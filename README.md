@@ -17,7 +17,7 @@ A personal finance manager for keeping track of accounts, spending and income.
 
 ## Getting started
 
-You need Node 22+ and a PostgreSQL 15+ database.
+You need Node 22+ and a PostgreSQL 15+ database (or Docker, see below).
 
 ```bash
 npm install
@@ -32,6 +32,35 @@ npm run dev
 
 Open http://localhost:5173 and create an account. The API applies database
 migrations automatically when it starts.
+
+## Running with Docker
+
+The quickest way to try the app: Postgres, the API and the web app (served by
+nginx) in one command.
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:8080.
+
+| Service | URL / port              | Notes                                    |
+| ------- | ----------------------- | ---------------------------------------- |
+| web     | http://localhost:8080   | nginx; proxies `/api` to the API         |
+| api     | http://localhost:4000   | Express API                              |
+| db      | `localhost:5432`        | Postgres 17, user/password `finance`     |
+
+Ports can be changed with `WEB_PORT`, `API_PORT` and `DB_PORT`, e.g.
+`WEB_PORT=3000 docker compose up`. Data lives in the `db-data` volume; remove it
+with `docker compose down -v` to start fresh.
+
+For day-to-day development you can run only the database in Docker and the apps
+on your machine:
+
+```bash
+docker compose up -d db
+npm run dev
+```
 
 ## Scripts
 
