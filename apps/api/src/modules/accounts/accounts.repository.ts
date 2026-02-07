@@ -98,10 +98,10 @@ export class AccountsRepository {
   }
 
   async delete(userId: string, id: string): Promise<boolean> {
-    const { rowCount } = await this.db.query('DELETE FROM accounts WHERE user_id = $1 AND id = $2', [
-      userId,
-      id,
-    ]);
+    const { rowCount } = await this.db.query(
+      'DELETE FROM accounts WHERE user_id = $1 AND id = $2',
+      [userId, id],
+    );
     return rowCount > 0;
   }
 }

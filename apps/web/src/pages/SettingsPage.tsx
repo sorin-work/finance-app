@@ -7,7 +7,9 @@ export function SettingsPage() {
       <PageHeader title="Settings" />
       <section className="card settings-section">
         <h2>Categories</h2>
-        <p className="muted">Rename, recolor or remove the categories used to group transactions.</p>
+        <p className="muted">
+          Rename, recolor or remove the categories used to group transactions.
+        </p>
         <CategoryManager />
       </section>
     </>

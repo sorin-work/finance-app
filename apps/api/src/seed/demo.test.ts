@@ -16,9 +16,10 @@ describe('seedDemoData', () => {
   it('creates a demo user with a year of history', async () => {
     expect(await seedDemoData(db, { today: '2026-01-31', bcryptRounds: 4 })).toBe(true);
 
-    const { rows: users } = await db.query<{ id: string }>('SELECT id FROM users WHERE email = $1', [
-      DEMO_EMAIL,
-    ]);
+    const { rows: users } = await db.query<{ id: string }>(
+      'SELECT id FROM users WHERE email = $1',
+      [DEMO_EMAIL],
+    );
     const userId = users[0]!.id;
 
     const { rows: range } = await db.query<{ first: string; last: string; count: number }>(

@@ -29,6 +29,7 @@ export function fetchSummary(month: string): Promise<MonthSummary> {
 }
 
 export async function fetchCashflow(end: string, months = 12): Promise<CashflowMonth[]> {
-  return (await api.get<{ months: CashflowMonth[] }>(`/reports/cashflow${toQuery({ end, months })}`))
-    .months;
+  return (
+    await api.get<{ months: CashflowMonth[] }>(`/reports/cashflow${toQuery({ end, months })}`)
+  ).months;
 }

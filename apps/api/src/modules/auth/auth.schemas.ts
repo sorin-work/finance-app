@@ -2,7 +2,10 @@ import { z } from 'zod';
 import { SUPPORTED_CURRENCIES } from '../../lib/currencies.js';
 
 export const registerSchema = z.object({
-  email: z.email().max(254).transform((v) => v.trim()),
+  email: z
+    .email()
+    .max(254)
+    .transform((v) => v.trim()),
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
   name: z.string().trim().min(1).max(100),
   currency: z.enum(SUPPORTED_CURRENCIES).default('USD'),

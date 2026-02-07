@@ -51,11 +51,11 @@ The demo user is created on first start with a year of transactions, five
 accounts and budgets for the last few months. Set `SEED_DEMO=false` to start
 with an empty database instead.
 
-| Service | URL / port              | Notes                                    |
-| ------- | ----------------------- | ---------------------------------------- |
-| web     | http://localhost:8080   | nginx; proxies `/api` to the API         |
-| api     | http://localhost:4000   | Express API                              |
-| db      | `localhost:5432`        | Postgres 17, user/password `finance`     |
+| Service | URL / port            | Notes                                |
+| ------- | --------------------- | ------------------------------------ |
+| web     | http://localhost:8080 | nginx; proxies `/api` to the API     |
+| api     | http://localhost:4000 | Express API                          |
+| db      | `localhost:5432`      | Postgres 17, user/password `finance` |
 
 Ports can be changed with `WEB_PORT`, `API_PORT` and `DB_PORT`, e.g.
 `WEB_PORT=3000 docker compose up`. Data lives in the `db-data` volume; remove it
@@ -73,13 +73,13 @@ npm run dev
 
 Run from the repository root:
 
-| Command             | What it does                              |
-| ------------------- | ----------------------------------------- |
-| `npm run dev`       | API and web app in watch mode             |
-| `npm test`          | All unit and route tests                  |
-| `npm run typecheck` | TypeScript checks for both apps           |
-| `npm run lint`      | ESLint                                    |
-| `npm run build`     | Production builds (`apps/*/dist`)         |
+| Command                    | What it does                         |
+| -------------------------- | ------------------------------------ |
+| `npm run dev`              | API and web app in watch mode        |
+| `npm test`                 | All unit and route tests             |
+| `npm run typecheck`        | TypeScript checks for both apps      |
+| `npm run lint`             | ESLint                               |
+| `npm run build`            | Production builds (`apps/*/dist`)    |
 | `npm run seed -w apps/api` | Create the demo user and sample data |
 
 ## Project layout

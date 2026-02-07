@@ -14,7 +14,11 @@ export const amountCents = z
   .max(MAX_AMOUNT_CENTS);
 
 /** Any amount in minor units, including zero and negatives (e.g. balances). */
-export const signedCents = z.number().int('Amounts are integer cents').min(-MAX_AMOUNT_CENTS).max(MAX_AMOUNT_CENTS);
+export const signedCents = z
+  .number()
+  .int('Amounts are integer cents')
+  .min(-MAX_AMOUNT_CENTS)
+  .max(MAX_AMOUNT_CENTS);
 
 export const id = z.uuid();
 

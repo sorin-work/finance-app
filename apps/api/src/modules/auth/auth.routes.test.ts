@@ -24,7 +24,11 @@ describe('auth routes', () => {
         .send({ email: 'ana@example.com', password: 'longenough', name: 'Ana', currency: 'EUR' })
         .expect(201);
 
-      expect(res.body.user).toMatchObject({ email: 'ana@example.com', name: 'Ana', currency: 'EUR' });
+      expect(res.body.user).toMatchObject({
+        email: 'ana@example.com',
+        name: 'Ana',
+        currency: 'EUR',
+      });
       expect(res.body.user).not.toHaveProperty('password_hash');
       expect(res.headers['set-cookie']?.[0]).toMatch(/^fa_session=.+HttpOnly/);
     });

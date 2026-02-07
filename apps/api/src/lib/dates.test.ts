@@ -17,9 +17,12 @@ describe('isISODate', () => {
     expect(isISODate(d)).toBe(true);
   });
 
-  it.each(['2023-02-29', '2024-13-01', '2024-00-10', '2024-1-1', '20240101', ''])('rejects %j', (d) => {
-    expect(isISODate(d)).toBe(false);
-  });
+  it.each(['2023-02-29', '2024-13-01', '2024-00-10', '2024-1-1', '20240101', ''])(
+    'rejects %j',
+    (d) => {
+      expect(isISODate(d)).toBe(false);
+    },
+  );
 });
 
 describe('isISOMonth', () => {
@@ -73,7 +76,12 @@ describe('months', () => {
   });
 
   it('lists months between two months', () => {
-    expect(monthsBetween('2023-11', '2024-02')).toEqual(['2023-11', '2023-12', '2024-01', '2024-02']);
+    expect(monthsBetween('2023-11', '2024-02')).toEqual([
+      '2023-11',
+      '2023-12',
+      '2024-01',
+      '2024-02',
+    ]);
     expect(monthsBetween('2024-02', '2024-01')).toEqual([]);
   });
 

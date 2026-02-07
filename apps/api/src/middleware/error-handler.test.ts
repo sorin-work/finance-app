@@ -25,7 +25,9 @@ describe('errorHandler', () => {
 
   it('includes details when present', async () => {
     const err = conflict('Duplicate');
-    const res = await request(appThatThrows(Object.assign(err, { details: { id: 1 } }))).post('/boom');
+    const res = await request(appThatThrows(Object.assign(err, { details: { id: 1 } }))).post(
+      '/boom',
+    );
     expect(res.status).toBe(409);
     expect(res.body.error.details).toEqual({ id: 1 });
   });

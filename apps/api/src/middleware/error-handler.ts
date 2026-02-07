@@ -50,18 +50,23 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   }
 
   if (isBodyParserError(err) && err.status < 500) {
-    const message = err.type === 'entity.too.large' ? 'Request body too large' : 'Malformed request body';
+    const message =
+      err.type === 'entity.too.large' ? 'Request body too large' : 'Malformed request body';
     res.status(err.status).json({ error: { code: 'bad_request', message } });
     return;
   }
 
   if (isPgError(err)) {
     if (err.code === '23505') {
-      res.status(409).json({ error: { code: 'conflict', message: 'A record with these values already exists' } });
+      res.status(409).json({
+        error: { code: 'conflict', message: 'A record with these values already exists' },
+      });
       return;
     }
     if (err.code === '23503') {
-      res.status(400).json({ error: { code: 'bad_request', message: 'Referenced record does not exist' } });
+      res
+        .status(400)
+        .json({ error: { code: 'bad_request', message: 'Referenced record does not exist' } });
       return;
     }
   }

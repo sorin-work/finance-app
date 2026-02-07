@@ -31,7 +31,9 @@ export interface BudgetTotals {
   remaining: number;
 }
 
-export function budgetTotals(budgets: ReadonlyArray<{ amount: number; spent: number }>): BudgetTotals {
+export function budgetTotals(
+  budgets: ReadonlyArray<{ amount: number; spent: number }>,
+): BudgetTotals {
   const budgeted = budgets.reduce((sum, b) => sum + b.amount, 0);
   const spent = budgets.reduce((sum, b) => sum + b.spent, 0);
   return { budgeted, spent, remaining: budgeted - spent };

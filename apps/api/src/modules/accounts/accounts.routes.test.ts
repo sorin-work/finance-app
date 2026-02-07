@@ -43,7 +43,9 @@ describe('accounts routes', () => {
   it('computes the balance from the opening balance and transactions', async () => {
     const { agent } = await signUp(app);
     const { account } = (
-      await agent.post('/api/accounts').send({ name: 'Main', type: 'checking', openingBalance: 1000_00 })
+      await agent
+        .post('/api/accounts')
+        .send({ name: 'Main', type: 'checking', openingBalance: 1000_00 })
     ).body;
 
     await agent
@@ -70,14 +72,20 @@ describe('accounts routes', () => {
       .expect(201);
 
     await bob.agent.get(`/api/accounts/${created.body.account.id}`).expect(404);
-    await bob.agent.patch(`/api/accounts/${created.body.account.id}`).send({ name: 'x' }).expect(404);
+    await bob.agent
+      .patch(`/api/accounts/${created.body.account.id}`)
+      .send({ name: 'x' })
+      .expect(404);
     expect((await bob.agent.get('/api/accounts')).body.accounts).toEqual([]);
   });
 
   it('validates input', async () => {
     const { agent } = await signUp(app);
     await agent.post('/api/accounts').send({ name: 'X', type: 'piggy-bank' }).expect(400);
-    await agent.post('/api/accounts').send({ name: 'X', type: 'cash', openingBalance: 1.5 }).expect(400);
+    await agent
+      .post('/api/accounts')
+      .send({ name: 'X', type: 'cash', openingBalance: 1.5 })
+      .expect(400);
     await agent.get('/api/accounts/not-a-uuid').expect(400);
   });
 });

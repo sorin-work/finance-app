@@ -127,7 +127,8 @@ export function CategoryManager() {
   const categories = useCategories();
 
   if (categories.isPending) return <p className="muted">Loading categories…</p>;
-  if (categories.isError) return <div className="alert alert--error">Could not load categories.</div>;
+  if (categories.isError)
+    return <div className="alert alert--error">Could not load categories.</div>;
 
   return (
     <div className="category-columns">

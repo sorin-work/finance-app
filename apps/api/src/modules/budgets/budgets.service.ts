@@ -5,7 +5,12 @@ import { CategoriesRepository } from '../categories/categories.repository.js';
 import { TransactionsRepository } from '../transactions/transactions.repository.js';
 import { BudgetsRepository, type BudgetRow } from './budgets.repository.js';
 import type { CopyBudgetsInput, UpsertBudgetInput } from './budgets.schemas.js';
-import { budgetProgress, budgetTotals, type BudgetProgress, type BudgetTotals } from './progress.js';
+import {
+  budgetProgress,
+  budgetTotals,
+  type BudgetProgress,
+  type BudgetTotals,
+} from './progress.js';
 
 export interface Budget {
   id: string;
@@ -61,7 +66,8 @@ export class BudgetsService {
   async upsert(userId: string, input: UpsertBudgetInput): Promise<Budget> {
     const category = await this.categories.findById(userId, input.categoryId);
     if (!category) throw badRequest('Unknown category');
-    if (category.kind !== 'expense') throw badRequest('Budgets can only be set on expense categories');
+    if (category.kind !== 'expense')
+      throw badRequest('Budgets can only be set on expense categories');
     return toBudget(await this.budgets.upsert(userId, input));
   }
 

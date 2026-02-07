@@ -27,7 +27,10 @@ export function DashboardPage() {
   const month = currentMonth();
   const accounts = useAccounts();
   const categories = useCategories();
-  const summary = useQuery({ queryKey: ['reports', 'summary', month], queryFn: () => fetchSummary(month) });
+  const summary = useQuery({
+    queryKey: ['reports', 'summary', month],
+    queryFn: () => fetchSummary(month),
+  });
   const budgets = useQuery({ queryKey: ['budgets', month], queryFn: () => fetchBudgets(month) });
   const cashflow = useQuery({
     queryKey: ['reports', 'cashflow', month, 6],
@@ -55,7 +58,9 @@ export function DashboardPage() {
       <div className="stat-row">
         <div className="card stat">
           <span className="stat__label">Net worth</span>
-          <span className={`stat__value ${netWorth !== undefined && netWorth < 0 ? 'negative' : ''}`}>
+          <span
+            className={`stat__value ${netWorth !== undefined && netWorth < 0 ? 'negative' : ''}`}
+          >
             {netWorth === undefined ? '—' : money(netWorth)}
           </span>
         </div>
@@ -163,7 +168,10 @@ export function DashboardPage() {
               const signed = t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0;
               return (
                 <li key={t.id} className="recent__row">
-                  <span className="recent__dot" style={{ background: category?.color ?? '#94a3b8' }} />
+                  <span
+                    className="recent__dot"
+                    style={{ background: category?.color ?? '#94a3b8' }}
+                  />
                   <span className="recent__main">
                     <strong>{t.payee || (t.type === 'transfer' ? 'Transfer' : 'Untitled')}</strong>
                     <span className="muted">

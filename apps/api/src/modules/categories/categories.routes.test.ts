@@ -31,8 +31,16 @@ describe('categories routes', () => {
       .expect(201);
     const id = created.body.category.id;
 
-    const renamed = await agent.patch(`/api/categories/${id}`).send({ name: 'Pet care' }).expect(200);
-    expect(renamed.body.category).toEqual({ id, name: 'Pet care', kind: 'expense', color: '#a855f7' });
+    const renamed = await agent
+      .patch(`/api/categories/${id}`)
+      .send({ name: 'Pet care' })
+      .expect(200);
+    expect(renamed.body.category).toEqual({
+      id,
+      name: 'Pet care',
+      kind: 'expense',
+      color: '#a855f7',
+    });
 
     await agent.delete(`/api/categories/${id}`).expect(204);
     await agent.delete(`/api/categories/${id}`).expect(404);
@@ -47,6 +55,9 @@ describe('categories routes', () => {
 
   it('validates colors', async () => {
     const { agent } = await signUp(app);
-    await agent.post('/api/categories').send({ name: 'X', kind: 'expense', color: 'red' }).expect(400);
+    await agent
+      .post('/api/categories')
+      .send({ name: 'X', kind: 'expense', color: 'red' })
+      .expect(400);
   });
 });

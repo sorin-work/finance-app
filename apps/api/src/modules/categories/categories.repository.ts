@@ -71,7 +71,11 @@ export class CategoriesRepository {
     );
   }
 
-  async update(userId: string, id: string, input: UpdateCategoryInput): Promise<CategoryRow | null> {
+  async update(
+    userId: string,
+    id: string,
+    input: UpdateCategoryInput,
+  ): Promise<CategoryRow | null> {
     const set = setClause({ name: input.name, color: input.color }, 3);
     const { rows } = await this.db.query<CategoryRow>(
       `UPDATE categories SET ${set.sql} WHERE user_id = $1 AND id = $2 RETURNING *`,

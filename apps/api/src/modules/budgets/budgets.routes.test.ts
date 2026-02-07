@@ -133,7 +133,9 @@ describe('budgets routes', () => {
         .put('/api/budgets')
         .send({ categoryId: category('Groceries'), month: '2026-01', amount: 500_00 });
 
-      const skipped = await agent.post('/api/budgets/copy').send({ from: '2025-12', to: '2026-01' });
+      const skipped = await agent
+        .post('/api/budgets/copy')
+        .send({ from: '2025-12', to: '2026-01' });
       expect(skipped.body.copied).toBe(1);
       let january = await agent.get('/api/budgets?month=2026-01');
       expect(january.body.totals.budgeted).toBe(1700_00);

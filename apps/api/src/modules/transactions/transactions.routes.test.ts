@@ -105,7 +105,12 @@ describe('transactions routes', () => {
       const rows = [
         { type: 'income', amount: 3000_00, date: '2025-11-28', categoryId: category('Salary') },
         { type: 'expense', amount: 54_20, date: '2025-12-01', categoryId: category('Groceries') },
-        { type: 'expense', amount: 9_99, date: '2025-12-03', categoryId: category('Subscriptions') },
+        {
+          type: 'expense',
+          amount: 9_99,
+          date: '2025-12-03',
+          categoryId: category('Subscriptions'),
+        },
         { type: 'expense', amount: 23_10, date: '2025-12-05', categoryId: category('Groceries') },
       ];
       for (const row of rows) {

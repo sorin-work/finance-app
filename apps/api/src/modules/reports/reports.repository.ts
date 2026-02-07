@@ -10,7 +10,11 @@ export class ReportsRepository {
   constructor(private readonly db: Queryable) {}
 
   /** Income and expense totals between two dates. Transfers are not counted. */
-  async totals(userId: string, from: string, to: string): Promise<{ income: number; expenses: number }> {
+  async totals(
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<{ income: number; expenses: number }> {
     const { rows } = await this.db.query<{ income: number; expenses: number }>(
       `SELECT COALESCE(sum(amount) FILTER (WHERE type = 'income'), 0)::bigint AS income,
               COALESCE(sum(amount) FILTER (WHERE type = 'expense'), 0)::bigint AS expenses

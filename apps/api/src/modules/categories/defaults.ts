@@ -1,7 +1,11 @@
 import type { CategoryKind } from './categories.schemas.js';
 
 /** Categories every new user starts with. They can be renamed or deleted later. */
-export const DEFAULT_CATEGORIES: ReadonlyArray<{ name: string; kind: CategoryKind; color: string }> = [
+export const DEFAULT_CATEGORIES: ReadonlyArray<{
+  name: string;
+  kind: CategoryKind;
+  color: string;
+}> = [
   { name: 'Salary', kind: 'income', color: '#15803d' },
   { name: 'Freelance', kind: 'income', color: '#0369a1' },
   { name: 'Interest & Dividends', kind: 'income', color: '#a16207' },

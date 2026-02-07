@@ -1,5 +1,12 @@
 import type { Database, Queryable } from '../db/types.js';
-import { addMonths, currentMonth, daysInMonth, monthsBetween, shiftMonth, todayISO } from '../lib/dates.js';
+import {
+  addMonths,
+  currentMonth,
+  daysInMonth,
+  monthsBetween,
+  shiftMonth,
+  todayISO,
+} from '../lib/dates.js';
 import { hashPassword } from '../modules/auth/password.js';
 import { CategoriesRepository } from '../modules/categories/categories.repository.js';
 import { DEFAULT_CATEGORIES } from '../modules/categories/defaults.js';
@@ -66,57 +73,221 @@ function buildTransactions(today: string, random: () => number): Tx[] {
       add({ ...tx, account: 'card' });
     };
 
-    add({ account: 'checking', category: 'Housing', type: 'expense', amount: 1450_00, date: day(1), payee: 'Parkside Apartments', notes: 'Rent' });
-    add({ account: 'checking', category: 'Salary', type: 'income', amount: 4200_00, date: day(25), payee: 'Acme Corp', notes: 'Payroll' });
-    add({ account: 'checking', to: 'savings', type: 'transfer', amount: 500_00, date: day(26), payee: 'Monthly savings' });
-    add({ account: 'savings', category: 'Interest & Dividends', type: 'income', amount: between(24_00, 36_00), date: day(lastDay), payee: 'Interest' });
+    add({
+      account: 'checking',
+      category: 'Housing',
+      type: 'expense',
+      amount: 1450_00,
+      date: day(1),
+      payee: 'Parkside Apartments',
+      notes: 'Rent',
+    });
+    add({
+      account: 'checking',
+      category: 'Salary',
+      type: 'income',
+      amount: 4200_00,
+      date: day(25),
+      payee: 'Acme Corp',
+      notes: 'Payroll',
+    });
+    add({
+      account: 'checking',
+      to: 'savings',
+      type: 'transfer',
+      amount: 500_00,
+      date: day(26),
+      payee: 'Monthly savings',
+    });
+    add({
+      account: 'savings',
+      category: 'Interest & Dividends',
+      type: 'income',
+      amount: between(24_00, 36_00),
+      date: day(lastDay),
+      payee: 'Interest',
+    });
 
-    add({ account: 'checking', category: 'Utilities', type: 'expense', amount: between(58_00, 112_00), date: day(9), payee: 'City Power & Light' });
-    add({ account: 'checking', category: 'Utilities', type: 'expense', amount: 49_99, date: day(14), payee: 'FiberNet Internet' });
-    add({ account: 'checking', category: 'Utilities', type: 'expense', amount: between(28_00, 46_00), date: day(17), payee: 'Mobile plan' });
+    add({
+      account: 'checking',
+      category: 'Utilities',
+      type: 'expense',
+      amount: between(58_00, 112_00),
+      date: day(9),
+      payee: 'City Power & Light',
+    });
+    add({
+      account: 'checking',
+      category: 'Utilities',
+      type: 'expense',
+      amount: 49_99,
+      date: day(14),
+      payee: 'FiberNet Internet',
+    });
+    add({
+      account: 'checking',
+      category: 'Utilities',
+      type: 'expense',
+      amount: between(28_00, 46_00),
+      date: day(17),
+      payee: 'Mobile plan',
+    });
 
-    onCard({ category: 'Subscriptions', type: 'expense', amount: 15_49, date: day(3), payee: 'Netflix' });
-    onCard({ category: 'Subscriptions', type: 'expense', amount: 11_99, date: day(6), payee: 'Spotify' });
-    onCard({ category: 'Subscriptions', type: 'expense', amount: 2_99, date: day(12), payee: 'iCloud' });
-    add({ account: 'checking', category: 'Health', type: 'expense', amount: 39_00, date: day(2), payee: 'Peak Fitness', notes: 'Gym membership' });
-    add({ account: 'checking', category: 'Transport', type: 'expense', amount: 85_00, date: day(1), payee: 'Metro transit pass' });
+    onCard({
+      category: 'Subscriptions',
+      type: 'expense',
+      amount: 15_49,
+      date: day(3),
+      payee: 'Netflix',
+    });
+    onCard({
+      category: 'Subscriptions',
+      type: 'expense',
+      amount: 11_99,
+      date: day(6),
+      payee: 'Spotify',
+    });
+    onCard({
+      category: 'Subscriptions',
+      type: 'expense',
+      amount: 2_99,
+      date: day(12),
+      payee: 'iCloud',
+    });
+    add({
+      account: 'checking',
+      category: 'Health',
+      type: 'expense',
+      amount: 39_00,
+      date: day(2),
+      payee: 'Peak Fitness',
+      notes: 'Gym membership',
+    });
+    add({
+      account: 'checking',
+      category: 'Transport',
+      type: 'expense',
+      amount: 85_00,
+      date: day(1),
+      payee: 'Metro transit pass',
+    });
 
     for (let i = between(6, 9); i > 0; i--) {
-      onCard({ category: 'Groceries', type: 'expense', amount: between(22_00, 138_00), date: day(between(1, 28)), payee: pick(['FreshMart', 'Green Grocer', 'Costco', 'Corner Market', "Trader Joe's"]) });
+      onCard({
+        category: 'Groceries',
+        type: 'expense',
+        amount: between(22_00, 138_00),
+        date: day(between(1, 28)),
+        payee: pick(['FreshMart', 'Green Grocer', 'Costco', 'Corner Market', "Trader Joe's"]),
+      });
     }
     for (let i = between(4, 8); i > 0; i--) {
       const small = random() < 0.4;
-      const tx = { category: 'Dining Out', type: 'expense' as const, amount: small ? between(4_50, 9_50) : between(14_00, 68_00), date: day(between(1, 28)), payee: small ? pick(['Blue Bottle Coffee', 'Corner Bakery']) : pick(["Luigi's Trattoria", 'Sushi Go', 'Taco Stand', 'The Green Bowl', 'Burger Joint']) };
+      const tx = {
+        category: 'Dining Out',
+        type: 'expense' as const,
+        amount: small ? between(4_50, 9_50) : between(14_00, 68_00),
+        date: day(between(1, 28)),
+        payee: small
+          ? pick(['Blue Bottle Coffee', 'Corner Bakery'])
+          : pick(["Luigi's Trattoria", 'Sushi Go', 'Taco Stand', 'The Green Bowl', 'Burger Joint']),
+      };
       if (small && random() < 0.5) add({ ...tx, account: 'cash' });
       else onCard(tx);
     }
     for (let i = 2; i > 0; i--) {
-      onCard({ category: 'Transport', type: 'expense', amount: between(35_00, 72_00), date: day(between(1, 28)), payee: pick(['Shell', 'Chevron']) });
+      onCard({
+        category: 'Transport',
+        type: 'expense',
+        amount: between(35_00, 72_00),
+        date: day(between(1, 28)),
+        payee: pick(['Shell', 'Chevron']),
+      });
     }
     for (let i = between(1, 3); i > 0; i--) {
-      onCard({ category: 'Shopping', type: 'expense', amount: between(18_00, 240_00), date: day(between(1, 28)), payee: pick(['Amazon', 'Target', 'IKEA', 'Uniqlo', 'Best Buy']) });
+      onCard({
+        category: 'Shopping',
+        type: 'expense',
+        amount: between(18_00, 240_00),
+        date: day(between(1, 28)),
+        payee: pick(['Amazon', 'Target', 'IKEA', 'Uniqlo', 'Best Buy']),
+      });
     }
     for (let i = between(1, 3); i > 0; i--) {
-      onCard({ category: 'Entertainment', type: 'expense', amount: between(12_00, 85_00), date: day(between(1, 28)), payee: pick(['Cinema City', 'Steam', 'Ticketmaster', 'Bowling Alley']) });
+      onCard({
+        category: 'Entertainment',
+        type: 'expense',
+        amount: between(12_00, 85_00),
+        date: day(between(1, 28)),
+        payee: pick(['Cinema City', 'Steam', 'Ticketmaster', 'Bowling Alley']),
+      });
     }
     if (random() < 0.35) {
-      onCard({ category: 'Health', type: 'expense', amount: between(20_00, 160_00), date: day(between(1, 28)), payee: pick(['CVS Pharmacy', 'Dental Care', 'Eye Clinic']) });
+      onCard({
+        category: 'Health',
+        type: 'expense',
+        amount: between(20_00, 160_00),
+        date: day(between(1, 28)),
+        payee: pick(['CVS Pharmacy', 'Dental Care', 'Eye Clinic']),
+      });
     }
     if (random() < 0.4) {
-      add({ account: 'checking', category: 'Freelance', type: 'income', amount: between(300_00, 950_00), date: day(between(5, 20)), payee: pick(['Northwind Studio', 'Contoso Ltd', 'Fabrikam']), notes: 'Freelance invoice' });
+      add({
+        account: 'checking',
+        category: 'Freelance',
+        type: 'income',
+        amount: between(300_00, 950_00),
+        date: day(between(5, 20)),
+        payee: pick(['Northwind Studio', 'Contoso Ltd', 'Fabrikam']),
+        notes: 'Freelance invoice',
+      });
     }
     if (m === 7 || m === 12 || random() < 0.1) {
-      onCard({ category: 'Travel', type: 'expense', amount: between(380_00, 1250_00), date: day(between(8, 22)), payee: pick(['Booking.com', 'SkyAir', 'Airbnb']) });
+      onCard({
+        category: 'Travel',
+        type: 'expense',
+        amount: between(380_00, 1250_00),
+        date: day(between(8, 22)),
+        payee: pick(['Booking.com', 'SkyAir', 'Airbnb']),
+      });
     }
     if (m % 3 === 0) {
-      add({ account: 'brokerage', category: 'Interest & Dividends', type: 'income', amount: between(60_00, 140_00), date: day(15), payee: 'Index fund dividend' });
-      add({ account: 'checking', to: 'brokerage', type: 'transfer', amount: 750_00, date: day(27), payee: 'Investing' });
+      add({
+        account: 'brokerage',
+        category: 'Interest & Dividends',
+        type: 'income',
+        amount: between(60_00, 140_00),
+        date: day(15),
+        payee: 'Index fund dividend',
+      });
+      add({
+        account: 'checking',
+        to: 'brokerage',
+        type: 'transfer',
+        amount: 750_00,
+        date: day(27),
+        payee: 'Investing',
+      });
     }
-    add({ account: 'checking', to: 'cash', type: 'transfer', amount: 100_00, date: day(between(3, 10)), payee: 'ATM withdrawal' });
+    add({
+      account: 'checking',
+      to: 'cash',
+      type: 'transfer',
+      amount: 100_00,
+      date: day(between(3, 10)),
+      payee: 'ATM withdrawal',
+    });
 
     // Pay off the card early next month.
     const payDate = addMonths(`${month}-01`, 1).slice(0, 8) + '05';
-    add({ account: 'checking', to: 'card', type: 'transfer', amount: cardSpend, date: payDate, payee: 'Card payment' });
+    add({
+      account: 'checking',
+      to: 'card',
+      type: 'transfer',
+      amount: cardSpend,
+      date: payDate,
+      payee: 'Card payment',
+    });
   }
 
   return txs.filter((tx) => tx.date <= today).sort((a, b) => a.date.localeCompare(b.date));

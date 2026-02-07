@@ -38,9 +38,7 @@ export function TransactionForm({
   const [amount, setAmount] = useState(transaction ? centsToInput(transaction.amount) : '');
   const [date, setDate] = useState(transaction?.date ?? today());
   const [accountId, setAccountId] = useState(transaction?.accountId ?? accounts[0]?.id ?? '');
-  const [transferAccountId, setTransferAccountId] = useState(
-    transaction?.transferAccountId ?? '',
-  );
+  const [transferAccountId, setTransferAccountId] = useState(transaction?.transferAccountId ?? '');
   const [categoryId, setCategoryId] = useState(transaction?.categoryId ?? '');
   const [payee, setPayee] = useState(transaction?.payee ?? '');
   const [notes, setNotes] = useState(transaction?.notes ?? '');
@@ -186,7 +184,11 @@ export function TransactionForm({
 
       <div className="form-actions">
         {onDelete && (
-          <button type="button" className="button button--danger form-actions__left" onClick={onDelete}>
+          <button
+            type="button"
+            className="button button--danger form-actions__left"
+            onClick={onDelete}
+          >
             Delete
           </button>
         )}
