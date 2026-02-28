@@ -1,7 +1,6 @@
 import type { Database } from '../../db/types.js';
-import { badRequest, notFound } from '../../lib/errors.js';
-import { AccountsRepository } from '../accounts/accounts.repository.js';
-import { CategoriesRepository } from '../categories/categories.repository.js';
+import { notFound } from '../../lib/errors.js';
+import { checkTransactionReferences } from './references.js';
 import {
   TransactionsRepository,
   toTransaction,
@@ -10,7 +9,6 @@ import {
 import type {
   CreateTransactionInput,
   ListTransactionsQuery,
-  TransactionType,
   UpdateTransactionInput,
 } from './transactions.schemas.js';
 
@@ -23,13 +21,9 @@ export interface TransactionPage {
 
 export class TransactionsService {
   private readonly transactions: TransactionsRepository;
-  private readonly accounts: AccountsRepository;
-  private readonly categories: CategoriesRepository;
 
-  constructor(db: Database) {
+  constructor(private readonly db: Database) {
     this.transactions = new TransactionsRepository(db);
-    this.accounts = new AccountsRepository(db);
-    this.categories = new CategoriesRepository(db);
   }
 
   async list(userId: string, query: ListTransactionsQuery): Promise<TransactionPage> {
@@ -44,7 +38,7 @@ export class TransactionsService {
   }
 
   async create(userId: string, input: CreateTransactionInput): Promise<Transaction> {
-    await this.checkReferences(userId, input);
+    await checkTransactionReferences(this.db, userId, input);
     return toTransaction(await this.transactions.create(userId, input));
   }
 
@@ -57,7 +51,7 @@ export class TransactionsService {
     const changes: UpdateTransactionInput =
       type === 'transfer' ? input : { ...input, transferAccountId: null };
 
-    await this.checkReferences(userId, {
+    await checkTransactionReferences(this.db, userId, {
       type,
       accountId: changes.accountId ?? existing.account_id,
       transferAccountId:
@@ -74,40 +68,5 @@ export class TransactionsService {
 
   async delete(userId: string, id: string): Promise<void> {
     if (!(await this.transactions.delete(userId, id))) throw notFound('Transaction');
-  }
-
-  /** Makes sure the accounts and category belong to the user and fit the transaction type. */
-  private async checkReferences(
-    userId: string,
-    tx: {
-      accountId: string;
-      transferAccountId: string | null;
-      categoryId: string | null;
-      type: TransactionType;
-    },
-  ): Promise<void> {
-    if (!(await this.accounts.findById(userId, tx.accountId))) {
-      throw badRequest('Unknown account');
-    }
-    if (tx.type === 'transfer') {
-      if (!tx.transferAccountId) throw badRequest('Transfers need a destination account');
-      if (tx.transferAccountId === tx.accountId) {
-        throw badRequest('Cannot transfer money to the same account');
-      }
-      if (!(await this.accounts.findById(userId, tx.transferAccountId))) {
-        throw badRequest('Unknown destination account');
-      }
-      if (tx.categoryId) throw badRequest('Transfers cannot have a category');
-      return;
-    }
-    if (tx.categoryId) {
-      const category = await this.categories.findById(userId, tx.categoryId);
-      if (!category) throw badRequest('Unknown category');
-      if (category.kind !== tx.type) {
-        throw badRequest(
-          `"${category.name}" is an ${category.kind} category and cannot be used for ${tx.type} transactions`,
-        );
-      }
-    }
   }
 }
