@@ -135,6 +135,53 @@ export class RecurringRepository {
     return rows[0] ?? null;
   }
 
+  /** Active rules with an occurrence on or before `today`, locked for this transaction. */
+  async lockDue(today: string, userId?: string): Promise<RecurringRow[]> {
+    const { rows } = await this.db.query<RecurringRow>(
+      `SELECT * FROM recurring_transactions
+       WHERE active AND next_date <= $1 AND ($2::uuid IS NULL OR user_id = $2::uuid)
+       ORDER BY next_date
+       FOR UPDATE SKIP LOCKED`,
+      [today, userId ?? null],
+    );
+    return rows;
+  }
+
+  /** Inserts one transaction per date, copied from the rule. */
+  async insertOccurrences(rule: RecurringRow, dates: string[]): Promise<void> {
+    if (dates.length === 0) return;
+    const params: unknown[] = [
+      rule.user_id,
+      rule.account_id,
+      rule.transfer_account_id,
+      rule.category_id,
+      rule.type,
+      rule.amount,
+      rule.payee,
+      rule.notes,
+      rule.id,
+    ];
+    const values = dates.map((date) => {
+      params.push(date);
+      return `($1, $2, $3, $4, $5, $6, $${params.length}, $7, $8, $9)`;
+    });
+    await this.db.query(
+      `INSERT INTO transactions
+         (user_id, account_id, transfer_account_id, category_id, type, amount, date, payee, notes,
+          recurring_id)
+       VALUES ${values.join(', ')}`,
+      params,
+    );
+  }
+
+  async advance(id: string, nextDate: string, active: boolean): Promise<void> {
+    await this.db.query(
+      `UPDATE recurring_transactions SET next_date = $2, active = $3, updated_at = now()
+       WHERE id = $1`,
+      [id, nextDate, active],
+    );
+  }
+
   async delete(userId: string, id: string): Promise<boolean> {
     const { rowCount } = await this.db.query(
       'DELETE FROM recurring_transactions WHERE user_id = $1 AND id = $2',

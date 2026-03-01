@@ -13,6 +13,7 @@ export const testConfig: Config = {
   sessionTtlDays: 7,
   cookieSecure: false,
   bcryptRounds: 4,
+  recurringIntervalMinutes: 0,
   seedDemo: false,
 };
 

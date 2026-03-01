@@ -4,6 +4,8 @@ import { loadConfig } from './config.js';
 import { migrate } from './db/migrate.js';
 import { createPostgresDatabase } from './db/postgres.js';
 import { createLogger } from './lib/logger.js';
+import { RecurringService } from './modules/recurring/recurring.service.js';
+import { startRecurringScheduler } from './modules/recurring/scheduler.js';
 import { DEMO_EMAIL, seedDemoData } from './seed/demo.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -21,12 +23,22 @@ if (config.seedDemo && (await seedDemoData(db, { bcryptRounds: config.bcryptRoun
 
 const app = createApp({ logger, db, config });
 
+const stopScheduler =
+  config.recurringIntervalMinutes > 0
+    ? startRecurringScheduler(
+        new RecurringService(db),
+        logger,
+        config.recurringIntervalMinutes * 60_000,
+      )
+    : () => undefined;
+
 const server = app.listen(config.port, () => {
   logger.info({ port: config.port }, 'api listening');
 });
 
 function shutdown(signal: string) {
   logger.info({ signal }, 'shutting down');
+  stopScheduler();
   server.close(() => {
     db.close().finally(() => process.exit(0));
   });

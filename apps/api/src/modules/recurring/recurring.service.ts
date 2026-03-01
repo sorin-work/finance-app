@@ -9,7 +9,7 @@ import {
   type RecurringRow,
 } from './recurring.repository.js';
 import type { CreateRecurringInput, UpdateRecurringInput } from './recurring.schemas.js';
-import { firstOccurrenceOnOrAfter } from './schedule.js';
+import { dueOccurrences, firstOccurrenceOnOrAfter, nextOccurrence } from './schedule.js';
 
 export class RecurringService {
   private readonly recurring: RecurringRepository;
@@ -68,6 +68,31 @@ export class RecurringService {
 
   async delete(userId: string, id: string): Promise<void> {
     if (!(await this.recurring.delete(userId, id))) throw notFound('Recurring transaction');
+  }
+
+  /**
+   * Creates the transactions for every occurrence that is due by `today`
+   * (for one user or everyone) and moves each rule to its next date.
+   * Rules whose end date has passed are deactivated. Returns how many
+   * transactions were created.
+   */
+  async processDue(today = this.today(), userId?: string): Promise<number> {
+    return this.db.transaction(async (tx) => {
+      const repo = new RecurringRepository(tx);
+      let created = 0;
+
+      for (const rule of await repo.lockDue(today, userId)) {
+        const dates = dueOccurrences(rule.next_date, rule.frequency, today, rule.end_date);
+        await repo.insertOccurrences(rule, dates);
+
+        const last = dates.at(-1);
+        const next = last ? nextOccurrence(last, rule.frequency) : rule.next_date;
+        const finished = rule.end_date !== null && next > rule.end_date;
+        await repo.advance(rule.id, next, !finished);
+        created += dates.length;
+      }
+      return created;
+    });
   }
 
   private nextDateFor(

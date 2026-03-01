@@ -16,6 +16,11 @@ export function recurringRoutes(recurring: RecurringService): Router {
     res.status(201).json({ recurring: await recurring.create(currentUserId(req), input) });
   });
 
+  /** Generate anything due for the current user right away instead of waiting for the timer. */
+  router.post('/run', async (req, res) => {
+    res.json({ created: await recurring.processDue(undefined, currentUserId(req)) });
+  });
+
   router.patch('/:id', async (req, res) => {
     const { id } = idParams.parse(req.params);
     const input = updateRecurringSchema.parse(req.body);
