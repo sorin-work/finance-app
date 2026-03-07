@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { AccountsPage } from './pages/AccountsPage';
 import { BudgetsPage } from './pages/BudgetsPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { RecurringPage } from './pages/RecurringPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -39,6 +40,7 @@ export function App() {
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="budgets" element={<BudgetsPage />} />
+        <Route path="recurring" element={<RecurringPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

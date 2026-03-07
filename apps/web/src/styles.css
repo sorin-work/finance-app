@@ -1049,3 +1049,22 @@ textarea {
 .recharts-cartesian-axis-tick-value {
   fill: var(--text-muted);
 }
+
+.alert--info {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  border: 1px solid #c7d2fe;
+}
+
+.table__row--muted td {
+  color: var(--text-muted);
+}
+
+.table__actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.table__actions .link-button + .link-button {
+  margin-left: 12px;
+}
