@@ -9,7 +9,12 @@ import {
   type RecurringRow,
 } from './recurring.repository.js';
 import type { CreateRecurringInput, UpdateRecurringInput } from './recurring.schemas.js';
-import { dueOccurrences, firstOccurrenceOnOrAfter, nextOccurrence } from './schedule.js';
+import {
+  anchorDayOf,
+  dueOccurrences,
+  firstOccurrenceOnOrAfter,
+  nextOccurrence,
+} from './schedule.js';
 
 export class RecurringService {
   private readonly recurring: RecurringRepository;
@@ -82,11 +87,15 @@ export class RecurringService {
       let created = 0;
 
       for (const rule of await repo.lockDue(today, userId)) {
-        const dates = dueOccurrences(rule.next_date, rule.frequency, today, rule.end_date);
+        const anchorDay = anchorDayOf(rule.start_date);
+        const dates = dueOccurrences(rule.next_date, rule.frequency, today, {
+          endDate: rule.end_date,
+          anchorDay,
+        });
         await repo.insertOccurrences(rule, dates);
 
         const last = dates.at(-1);
-        const next = last ? nextOccurrence(last, rule.frequency) : rule.next_date;
+        const next = last ? nextOccurrence(last, rule.frequency, anchorDay) : rule.next_date;
         const finished = rule.end_date !== null && next > rule.end_date;
         await repo.advance(rule.id, next, !finished);
         created += dates.length;

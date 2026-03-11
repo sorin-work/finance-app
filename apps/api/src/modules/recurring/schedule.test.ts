@@ -29,21 +29,53 @@ describe('dueOccurrences', () => {
   });
 
   it('stops at the end date', () => {
-    expect(dueOccurrences('2026-01-01', 'weekly', '2026-12-31', '2026-01-20')).toEqual([
-      '2026-01-01',
-      '2026-01-08',
-      '2026-01-15',
-    ]);
+    expect(dueOccurrences('2026-01-01', 'weekly', '2026-12-31', { endDate: '2026-01-20' })).toEqual(
+      ['2026-01-01', '2026-01-08', '2026-01-15'],
+    );
   });
 
   it('caps the number of occurrences', () => {
-    expect(dueOccurrences('2020-01-01', 'daily', '2026-01-01', null, 10)).toHaveLength(10);
+    expect(dueOccurrences('2020-01-01', 'daily', '2026-01-01', { limit: 10 })).toHaveLength(10);
+  });
+
+  it('keeps month-end schedules on the last day of each month', () => {
+    expect(dueOccurrences('2026-01-31', 'monthly', '2026-05-31')).toEqual([
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+      '2026-05-31',
+    ]);
+  });
+
+  it('uses the anchor day when resuming from a clamped date', () => {
+    expect(dueOccurrences('2026-02-28', 'monthly', '2026-04-30', { anchorDay: 31 })).toEqual([
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+    ]);
+  });
+});
+
+describe('month-based schedules', () => {
+  it('returns to the anchor day after a short month', () => {
+    expect(nextOccurrence('2026-02-28', 'monthly', 30)).toBe('2026-03-30');
+    expect(nextOccurrence('2026-02-28', 'monthly')).toBe('2026-03-28');
+  });
+
+  it('handles quarterly schedules from the 31st', () => {
+    expect(nextOccurrence('2026-01-31', 'quarterly')).toBe('2026-04-30');
+    expect(nextOccurrence('2026-04-30', 'quarterly', 31)).toBe('2026-07-31');
   });
 });
 
 describe('firstOccurrenceOnOrAfter', () => {
   it('skips occurrences before the date', () => {
     expect(firstOccurrenceOnOrAfter('2026-01-03', 'weekly', '2026-01-20')).toBe('2026-01-24');
+  });
+
+  it('does not drift for schedules on the 31st', () => {
+    expect(firstOccurrenceOnOrAfter('2025-10-31', 'monthly', '2026-03-01')).toBe('2026-03-31');
   });
 
   it('returns the start when it is already on or after the date', () => {

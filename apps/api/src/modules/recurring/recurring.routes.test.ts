@@ -130,6 +130,22 @@ describe('recurring transactions', () => {
       expect(list.body.recurring[0].nextDate).toBe('2026-04-10');
     });
 
+    it('keeps rules that start on the 31st on the last day of the month', async () => {
+      const { recurring } = (
+        await agent.post('/api/recurring').send(rule({ startDate: '2025-12-31', payee: 'Rent' }))
+      ).body;
+
+      await new RecurringService(db).processDue('2026-02-28');
+      await new RecurringService(db).processDue('2026-04-30');
+      expect((await transactionsFor(recurring.id)).map((t) => t.date)).toEqual([
+        '2025-12-31',
+        '2026-01-31',
+        '2026-02-28',
+        '2026-03-31',
+        '2026-04-30',
+      ]);
+    });
+
     it('is idempotent for the same day', async () => {
       await agent.post('/api/recurring').send(rule());
       const service = new RecurringService(db);
