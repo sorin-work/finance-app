@@ -8,6 +8,7 @@ import {
   PieIcon,
   RepeatIcon,
   SettingsIcon,
+  TargetIcon,
   WalletIcon,
 } from './icons';
 
@@ -23,6 +24,7 @@ const NAV: NavItem[] = [
   { to: '/accounts', label: 'Accounts', icon: WalletIcon },
   { to: '/budgets', label: 'Budgets', icon: PieIcon },
   { to: '/recurring', label: 'Recurring', icon: RepeatIcon },
+  { to: '/goals', label: 'Goals', icon: TargetIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 

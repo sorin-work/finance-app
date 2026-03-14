@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { AccountsPage } from './pages/AccountsPage';
 import { BudgetsPage } from './pages/BudgetsPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { GoalsPage } from './pages/GoalsPage';
 import { RecurringPage } from './pages/RecurringPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -41,6 +42,7 @@ export function App() {
         <Route path="accounts" element={<AccountsPage />} />
         <Route path="budgets" element={<BudgetsPage />} />
         <Route path="recurring" element={<RecurringPage />} />
+        <Route path="goals" element={<GoalsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
