@@ -14,6 +14,8 @@ import { budgetsRoutes } from './modules/budgets/budgets.routes.js';
 import { BudgetsService } from './modules/budgets/budgets.service.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { CategoriesService } from './modules/categories/categories.service.js';
+import { goalsRoutes } from './modules/goals/goals.routes.js';
+import { GoalsService } from './modules/goals/goals.service.js';
 import { recurringRoutes } from './modules/recurring/recurring.routes.js';
 import { RecurringService } from './modules/recurring/recurring.service.js';
 import { reportsRoutes } from './modules/reports/reports.routes.js';
@@ -60,6 +62,7 @@ export function createApp({ logger, db, config }: AppDeps) {
   app.use('/api/budgets', authed, budgetsRoutes(new BudgetsService(db)));
   app.use('/api/reports', authed, reportsRoutes(new ReportsService(db)));
   app.use('/api/recurring', authed, recurringRoutes(new RecurringService(db)));
+  app.use('/api/goals', authed, goalsRoutes(new GoalsService(db)));
 
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
