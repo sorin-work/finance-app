@@ -142,6 +142,17 @@ export function GoalsPage() {
               {goal.targetDate && <span>by {formatDate(goal.targetDate)}</span>}
             </div>
 
+            {goal.monthlyNeeded !== null && (
+              <p className="goal-card__hint">
+                Save <strong>{money(goal.monthlyNeeded)}</strong> a month to get there on time.
+              </p>
+            )}
+            {goal.overdue && (
+              <p className="goal-card__hint goal-card__hint--warning">
+                The target date has passed with {money(goal.remaining)} still to go.
+              </p>
+            )}
+
             <Contribute goal={goal} />
 
             <footer className="goal-card__footer">

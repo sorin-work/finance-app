@@ -1157,3 +1157,16 @@ textarea {
   border-color: var(--surface);
   box-shadow: 0 0 0 2px var(--text);
 }
+
+.goal-card__hint {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  font-size: 13px;
+}
+
+.goal-card__hint--warning {
+  background: #fff7ed;
+  color: #9a3412;
+}

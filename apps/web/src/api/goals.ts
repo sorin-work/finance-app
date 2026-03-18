@@ -9,6 +9,10 @@ export interface Goal {
   color: string;
   progress: number;
   completed: boolean;
+  remaining: number;
+  monthsLeft: number | null;
+  monthlyNeeded: number | null;
+  overdue: boolean;
 }
 
 export interface GoalInput {

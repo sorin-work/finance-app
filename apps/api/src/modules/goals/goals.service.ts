@@ -1,9 +1,11 @@
 import type { Database } from '../../db/types.js';
+import { todayISO } from '../../lib/dates.js';
 import { notFound } from '../../lib/errors.js';
 import { GoalsRepository, type GoalRow } from './goals.repository.js';
 import type { CreateGoalInput, UpdateGoalInput } from './goals.schemas.js';
+import { goalProjection, type GoalProjection } from './projection.js';
 
-export interface Goal {
+export interface Goal extends GoalProjection {
   id: string;
   name: string;
   targetAmount: number;
@@ -15,8 +17,14 @@ export interface Goal {
   completed: boolean;
 }
 
-export function toGoal(row: GoalRow): Goal {
+export function toGoal(row: GoalRow, today: string): Goal {
+  const targets = {
+    targetAmount: row.target_amount,
+    savedAmount: row.saved_amount,
+    targetDate: row.target_date,
+  };
   return {
+    ...goalProjection(targets, today),
     id: row.id,
     name: row.name,
     targetAmount: row.target_amount,
@@ -31,29 +39,33 @@ export function toGoal(row: GoalRow): Goal {
 export class GoalsService {
   private readonly goals: GoalsRepository;
 
-  constructor(db: Database) {
+  constructor(
+    db: Database,
+    private readonly today: () => string = () => todayISO(),
+  ) {
     this.goals = new GoalsRepository(db);
   }
 
   async list(userId: string): Promise<Goal[]> {
-    return (await this.goals.list(userId)).map(toGoal);
+    const today = this.today();
+    return (await this.goals.list(userId)).map((row) => toGoal(row, today));
   }
 
   async create(userId: string, input: CreateGoalInput): Promise<Goal> {
-    return toGoal(await this.goals.create(userId, input));
+    return toGoal(await this.goals.create(userId, input), this.today());
   }
 
   async update(userId: string, id: string, input: UpdateGoalInput): Promise<Goal> {
     const row = await this.goals.update(userId, id, input);
     if (!row) throw notFound('Goal');
-    return toGoal(row);
+    return toGoal(row, this.today());
   }
 
   /** Adds money to a goal, or takes it out when `amount` is negative. */
   async contribute(userId: string, id: string, amount: number): Promise<Goal> {
     const row = await this.goals.addToSaved(userId, id, amount);
     if (!row) throw notFound('Goal');
-    return toGoal(row);
+    return toGoal(row, this.today());
   }
 
   async delete(userId: string, id: string): Promise<void> {
