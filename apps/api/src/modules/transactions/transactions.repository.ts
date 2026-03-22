@@ -51,6 +51,11 @@ export function toTransaction(row: TransactionRow): Transaction {
   };
 }
 
+/** Escapes LIKE wildcards so user input is matched literally. */
+function likePattern(text: string): string {
+  return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
 function whereClause(userId: string, filters: TransactionFilters) {
   const conditions = ['user_id = $1'];
   const params: unknown[] = [userId];
@@ -64,6 +69,7 @@ function whereClause(userId: string, filters: TransactionFilters) {
   if (filters.accountId) add('(account_id = ? OR transfer_account_id = ?)', filters.accountId);
   if (filters.categoryId) add('category_id = ?', filters.categoryId);
   if (filters.type) add('type = ?', filters.type);
+  if (filters.q) add('(payee ILIKE ? OR notes ILIKE ?)', likePattern(filters.q));
 
   return { sql: conditions.join(' AND '), params };
 }

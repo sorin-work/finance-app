@@ -1170,3 +1170,7 @@ textarea {
   background: #fff7ed;
   color: #9a3412;
 }
+
+.filters__search {
+  flex: 2 1 220px !important;
+}

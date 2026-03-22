@@ -45,6 +45,8 @@ export const listTransactionsQuery = z.object({
   accountId: id.optional(),
   categoryId: id.optional(),
   type: z.enum(TRANSACTION_TYPES).optional(),
+  /** Case-insensitive search in payee and notes. */
+  q: z.string().trim().max(100).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });

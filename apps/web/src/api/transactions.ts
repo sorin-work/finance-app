@@ -7,6 +7,7 @@ export interface TransactionFilters {
   accountId?: string;
   categoryId?: string;
   type?: TransactionType;
+  q?: string;
   page?: number;
   pageSize?: number;
 }

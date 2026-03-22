@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { ApiError } from '../api/client';
 import {
@@ -23,7 +23,7 @@ import { formatDate } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 
 const PAGE_SIZE = 25;
-const FILTER_KEYS = ['from', 'to', 'accountId', 'categoryId', 'type'] as const;
+const FILTER_KEYS = ['q', 'from', 'to', 'accountId', 'categoryId', 'type'] as const;
 
 type Editing = { mode: 'create' } | { mode: 'edit'; transaction: Transaction } | null;
 
@@ -41,6 +41,7 @@ export function TransactionsPage() {
     accountId: params.get('accountId') ?? undefined,
     categoryId: params.get('categoryId') ?? undefined,
     type: (params.get('type') as TransactionType | null) ?? undefined,
+    q: params.get('q') ?? undefined,
     page: Number(params.get('page') ?? 1),
     pageSize: PAGE_SIZE,
   };
@@ -98,6 +99,16 @@ export function TransactionsPage() {
     setParams(next);
   }
 
+  // Typing updates the URL (and the query) once the user pauses.
+  const [search, setSearch] = useState(params.get('q') ?? '');
+  const urlSearch = params.get('q') ?? '';
+  useEffect(() => {
+    if (search.trim() === urlSearch) return;
+    const timer = setTimeout(() => setFilter('q', search.trim()), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, urlSearch]);
+
   function goToPage(page: number) {
     setParams({ page: String(page) });
   }
@@ -131,6 +142,15 @@ export function TransactionsPage() {
       />
 
       <div className="card filters">
+        <label className="filters__search">
+          Search
+          <input
+            type="search"
+            placeholder="Payee or notes"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
         <label>
           From
           <input
@@ -185,7 +205,13 @@ export function TransactionsPage() {
           </select>
         </label>
         {hasFilters && (
-          <button className="button filters__clear" onClick={() => setParams({})}>
+          <button
+            className="button filters__clear"
+            onClick={() => {
+              setSearch('');
+              setParams({});
+            }}
+          >
             Clear
           </button>
         )}

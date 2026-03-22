@@ -143,6 +143,39 @@ describe('transactions routes', () => {
       expect(groceries.body.total).toBe(2);
     });
 
+    it('searches payee and notes case-insensitively', async () => {
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        type: 'expense',
+        amount: 4_50,
+        date: '2025-12-06',
+        payee: 'Blue Bottle Coffee',
+      });
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        type: 'expense',
+        amount: 3_00,
+        date: '2025-12-07',
+        payee: 'Kiosk',
+        notes: 'coffee with Sam',
+      });
+
+      const res = await agent.get('/api/transactions?q=COFFEE').expect(200);
+      expect(res.body.total).toBe(2);
+    });
+
+    it('treats LIKE wildcards in the search literally', async () => {
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        type: 'expense',
+        amount: 1_00,
+        date: '2025-12-06',
+        payee: '100% juice',
+      });
+      expect((await agent.get('/api/transactions?q=100%25')).body.total).toBe(1);
+      expect((await agent.get('/api/transactions?q=_')).body.total).toBe(0);
+    });
+
     it('paginates', async () => {
       const page2 = await agent.get('/api/transactions?page=2&pageSize=3').expect(200);
       expect(page2.body).toMatchObject({ total: 4, page: 2, pageSize: 3 });
