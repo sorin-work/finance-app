@@ -56,22 +56,39 @@ function likePattern(text: string): string {
   return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
 
-function whereClause(userId: string, filters: TransactionFilters) {
-  const conditions = ['user_id = $1'];
+/** WHERE conditions for the list filters. `alias` prefixes columns when the query joins tables. */
+function whereClause(userId: string, filters: TransactionFilters, alias?: string) {
+  const col = (name: string) => (alias ? `${alias}.${name}` : name);
+  const conditions = [`${col('user_id')} = $1`];
   const params: unknown[] = [userId];
   const add = (sql: string, value: unknown) => {
     params.push(value);
     conditions.push(sql.replaceAll('?', `$${params.length}`));
   };
 
-  if (filters.from) add('date >= ?', filters.from);
-  if (filters.to) add('date <= ?', filters.to);
-  if (filters.accountId) add('(account_id = ? OR transfer_account_id = ?)', filters.accountId);
-  if (filters.categoryId) add('category_id = ?', filters.categoryId);
-  if (filters.type) add('type = ?', filters.type);
-  if (filters.q) add('(payee ILIKE ? OR notes ILIKE ?)', likePattern(filters.q));
+  if (filters.from) add(`${col('date')} >= ?`, filters.from);
+  if (filters.to) add(`${col('date')} <= ?`, filters.to);
+  if (filters.accountId) {
+    add(`(${col('account_id')} = ? OR ${col('transfer_account_id')} = ?)`, filters.accountId);
+  }
+  if (filters.categoryId) add(`${col('category_id')} = ?`, filters.categoryId);
+  if (filters.type) add(`${col('type')} = ?`, filters.type);
+  if (filters.q) {
+    add(`(${col('payee')} ILIKE ? OR ${col('notes')} ILIKE ?)`, likePattern(filters.q));
+  }
 
   return { sql: conditions.join(' AND '), params };
+}
+
+export interface ExportRow {
+  date: string;
+  type: TransactionType;
+  amount: number;
+  account: string;
+  transfer_account: string | null;
+  category: string | null;
+  payee: string;
+  notes: string;
 }
 
 export class TransactionsRepository {
@@ -97,6 +114,23 @@ export class TransactionsRepository {
       ),
     ]);
     return { rows, total: count.rows[0]?.total ?? 0 };
+  }
+
+  /** Every matching transaction with account and category names, oldest first. */
+  async exportRows(userId: string, filters: TransactionFilters): Promise<ExportRow[]> {
+    const where = whereClause(userId, filters, 't');
+    const { rows } = await this.db.query<ExportRow>(
+      `SELECT t.date, t.type, t.amount, a.name AS account, ta.name AS transfer_account,
+              c.name AS category, t.payee, t.notes
+       FROM transactions t
+       JOIN accounts a ON a.id = t.account_id
+       LEFT JOIN accounts ta ON ta.id = t.transfer_account_id
+       LEFT JOIN categories c ON c.id = t.category_id
+       WHERE ${where.sql}
+       ORDER BY t.date, t.created_at`,
+      where.params,
+    );
+    return rows;
   }
 
   /** Total expenses per category between two dates. Uncategorized spending is keyed by null. */

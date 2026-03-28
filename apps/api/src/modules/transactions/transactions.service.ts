@@ -1,5 +1,7 @@
 import type { Database } from '../../db/types.js';
+import { toCsv } from '../../lib/csv.js';
 import { notFound } from '../../lib/errors.js';
+import { centsToDecimal } from '../../lib/money.js';
 import { checkTransactionReferences } from './references.js';
 import {
   TransactionsRepository,
@@ -9,8 +11,20 @@ import {
 import type {
   CreateTransactionInput,
   ListTransactionsQuery,
+  TransactionFilters,
   UpdateTransactionInput,
 } from './transactions.schemas.js';
+
+export const CSV_HEADER = [
+  'Date',
+  'Type',
+  'Amount',
+  'Account',
+  'To account',
+  'Category',
+  'Payee',
+  'Notes',
+];
 
 export interface TransactionPage {
   items: Transaction[];
@@ -64,6 +78,24 @@ export class TransactionsService {
     const row = await this.transactions.update(userId, id, changes);
     if (!row) throw notFound('Transaction');
     return toTransaction(row);
+  }
+
+  /** CSV with one row per transaction. Expenses have negative amounts. */
+  async exportCsv(userId: string, filters: TransactionFilters): Promise<string> {
+    const rows = await this.transactions.exportRows(userId, filters);
+    return toCsv([
+      CSV_HEADER,
+      ...rows.map((r) => [
+        r.date,
+        r.type,
+        centsToDecimal(r.type === 'expense' ? -r.amount : r.amount),
+        r.account,
+        r.transfer_account ?? '',
+        r.category ?? '',
+        r.payee,
+        r.notes,
+      ]),
+    ]);
   }
 
   async delete(userId: string, id: string): Promise<void> {

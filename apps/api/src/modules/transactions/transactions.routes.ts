@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { todayISO } from '../../lib/dates.js';
 import { idParams } from '../../lib/validation.js';
 import { currentUserId } from '../../middleware/auth.js';
 import {
   createTransactionSchema,
+  exportTransactionsQuery,
   listTransactionsQuery,
   updateTransactionSchema,
 } from './transactions.schemas.js';
@@ -14,6 +16,12 @@ export function transactionsRoutes(transactions: TransactionsService): Router {
   router.get('/', async (req, res) => {
     const query = listTransactionsQuery.parse(req.query);
     res.json(await transactions.list(currentUserId(req), query));
+  });
+
+  router.get('/export', async (req, res) => {
+    const filters = exportTransactionsQuery.parse(req.query);
+    const csv = await transactions.exportCsv(currentUserId(req), filters);
+    res.type('text/csv; charset=utf-8').attachment(`transactions-${todayISO()}.csv`).send(csv);
   });
 
   router.post('/', async (req, res) => {

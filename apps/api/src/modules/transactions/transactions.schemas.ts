@@ -51,6 +51,8 @@ export const listTransactionsQuery = z.object({
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });
 
+export const exportTransactionsQuery = listTransactionsQuery.omit({ page: true, pageSize: true });
+
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type ListTransactionsQuery = z.infer<typeof listTransactionsQuery>;

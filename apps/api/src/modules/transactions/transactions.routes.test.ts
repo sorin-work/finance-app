@@ -189,6 +189,47 @@ describe('transactions routes', () => {
     });
   });
 
+  describe('export', () => {
+    it('downloads matching transactions as csv', async () => {
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        categoryId: category('Groceries'),
+        type: 'expense',
+        amount: 54_20,
+        date: '2025-12-01',
+        payee: 'Market, "organic"',
+      });
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        transferAccountId: savings,
+        type: 'transfer',
+        amount: 100_00,
+        date: '2025-12-02',
+      });
+
+      const res = await agent.get('/api/transactions/export').expect(200);
+      expect(res.headers['content-type']).toContain('text/csv');
+      expect(res.headers['content-disposition']).toMatch(/attachment; filename="transactions-/);
+      expect(res.text.split('\r\n')).toEqual([
+        'Date,Type,Amount,Account,To account,Category,Payee,Notes',
+        '2025-12-01,expense,-54.20,Checking,,Groceries,"Market, ""organic""",',
+        '2025-12-02,transfer,100.00,Checking,Savings,,,',
+        '',
+      ]);
+    });
+
+    it('applies filters', async () => {
+      await agent.post('/api/transactions').send({
+        accountId: checking,
+        type: 'income',
+        amount: 1_00,
+        date: '2025-11-01',
+      });
+      const res = await agent.get('/api/transactions/export?from=2025-12-01').expect(200);
+      expect(res.text.trim().split('\r\n')).toHaveLength(1);
+    });
+  });
+
   describe('update and delete', () => {
     it('updates fields and keeps the balance in sync', async () => {
       const { transaction } = (
