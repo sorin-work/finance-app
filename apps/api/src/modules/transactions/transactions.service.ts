@@ -1,7 +1,10 @@
 import type { Database } from '../../db/types.js';
 import { toCsv } from '../../lib/csv.js';
-import { notFound } from '../../lib/errors.js';
+import { badRequest, notFound } from '../../lib/errors.js';
 import { centsToDecimal } from '../../lib/money.js';
+import { AccountsRepository } from '../accounts/accounts.repository.js';
+import { CategoriesRepository } from '../categories/categories.repository.js';
+import { parseImportCsv, type DateFormat, type ImportProblem } from './csv-import.js';
 import { checkTransactionReferences } from './references.js';
 import {
   TransactionsRepository,
@@ -25,6 +28,11 @@ export const CSV_HEADER = [
   'Payee',
   'Notes',
 ];
+
+export interface ImportResult {
+  imported: number;
+  skipped: ImportProblem[];
+}
 
 export interface TransactionPage {
   items: Transaction[];
@@ -96,6 +104,64 @@ export class TransactionsService {
         r.notes,
       ]),
     ]);
+  }
+
+  /**
+   * Imports a CSV into one account. Negative amounts become expenses and
+   * positive ones income. Categories are matched by name. Rows that match an
+   * existing transaction (same date, amount and payee) are skipped so the same
+   * file can be imported twice safely.
+   */
+  async importCsv(
+    userId: string,
+    input: { accountId: string; csv: string; dateFormat: DateFormat },
+  ): Promise<ImportResult> {
+    if (!(await new AccountsRepository(this.db).findById(userId, input.accountId))) {
+      throw badRequest('Unknown account');
+    }
+    const { rows, problems } = parseImportCsv(input.csv, input.dateFormat);
+    if (rows.length === 0 && problems.length === 1 && problems[0]!.line === 1) {
+      throw badRequest(problems[0]!.reason);
+    }
+
+    const categories = await new CategoriesRepository(this.db).list(userId);
+    const categoryId = (name: string | null, kind: 'income' | 'expense') =>
+      categories.find((c) => c.kind === kind && c.name.toLowerCase() === name?.toLowerCase())?.id ??
+      null;
+
+    const key = (date: string, type: string, amount: number, payee: string) =>
+      `${date}|${type}|${amount}|${payee.toLowerCase()}`;
+    const existing = new Set(
+      (await this.transactions.exportRows(userId, { accountId: input.accountId })).map((r) =>
+        key(r.date, r.type, r.amount, r.payee),
+      ),
+    );
+
+    const skipped = [...problems];
+    const toInsert: CreateTransactionInput[] = [];
+    for (const row of rows) {
+      const type = row.amount < 0 ? 'expense' : 'income';
+      const amount = Math.abs(row.amount);
+      const rowKey = key(row.date, type, amount, row.payee);
+      if (existing.has(rowKey)) {
+        skipped.push({ line: row.line, reason: 'Already imported' });
+        continue;
+      }
+      existing.add(rowKey);
+      toInsert.push({
+        accountId: input.accountId,
+        transferAccountId: null,
+        categoryId: categoryId(row.category, type),
+        type,
+        amount,
+        date: row.date,
+        payee: row.payee,
+        notes: row.notes,
+      });
+    }
+
+    await this.db.transaction((tx) => new TransactionsRepository(tx).createMany(userId, toInsert));
+    return { imported: toInsert.length, skipped: skipped.sort((a, b) => a.line - b.line) };
   }
 
   async delete(userId: string, id: string): Promise<void> {

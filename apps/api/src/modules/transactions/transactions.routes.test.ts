@@ -230,6 +230,88 @@ describe('transactions routes', () => {
     });
   });
 
+  describe('import', () => {
+    const csv = [
+      'Date,Description,Amount,Category,Memo',
+      '2026-03-02,FreshMart,-54.20,Groceries,weekly shop',
+      '2026-03-03,Acme Corp,"2,500.00",Salary,',
+      '2026-03-04,Mystery shop,-10.00,Not a category,',
+      'yesterday,Broken,-1.00,,',
+      '2026-03-05,Zero,0,,',
+    ].join('\n');
+
+    it('creates expenses and income and matches categories by name', async () => {
+      const res = await agent
+        .post('/api/transactions/import')
+        .send({ accountId: checking, csv })
+        .expect(200);
+
+      expect(res.body.imported).toBe(3);
+      expect(res.body.skipped).toEqual([
+        { line: 5, reason: 'Invalid date "yesterday"' },
+        { line: 6, reason: 'Missing or invalid amount' },
+      ]);
+
+      const list = (await agent.get('/api/transactions?from=2026-03-01')).body.items;
+      const byPayee = Object.fromEntries(list.map((t: { payee: string }) => [t.payee, t]));
+      expect(byPayee['FreshMart']).toMatchObject({
+        type: 'expense',
+        amount: 54_20,
+        categoryId: category('Groceries'),
+        notes: 'weekly shop',
+      });
+      expect(byPayee['Acme Corp']).toMatchObject({
+        type: 'income',
+        amount: 2500_00,
+        categoryId: category('Salary'),
+      });
+      expect(byPayee['Mystery shop'].categoryId).toBeNull();
+      expect(await balanceOf(checking)).toBe(500_00 - 54_20 + 2500_00 - 10_00);
+    });
+
+    it('skips rows that were already imported', async () => {
+      await agent.post('/api/transactions/import').send({ accountId: checking, csv });
+      const again = await agent
+        .post('/api/transactions/import')
+        .send({ accountId: checking, csv })
+        .expect(200);
+      expect(again.body.imported).toBe(0);
+      expect(
+        again.body.skipped.filter((s: { reason: string }) => s.reason === 'Already imported'),
+      ).toHaveLength(3);
+    });
+
+    it('supports debit/credit columns and US dates', async () => {
+      const bank = [
+        'Posted Date,Payee,Debit,Credit',
+        '03/15/2026,Coffee,4.50,',
+        '03/16/2026,Refund,,12.00',
+      ];
+      const res = await agent
+        .post('/api/transactions/import')
+        .send({ accountId: checking, csv: bank.join('\r\n'), dateFormat: 'MDY' })
+        .expect(200);
+      expect(res.body).toEqual({ imported: 2, skipped: [] });
+      expect(await balanceOf(checking)).toBe(500_00 - 4_50 + 12_00);
+    });
+
+    it('rejects files without the required columns', async () => {
+      const res = await agent
+        .post('/api/transactions/import')
+        .send({ accountId: checking, csv: 'Foo,Bar\n1,2' });
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toMatch(/Missing columns/);
+    });
+
+    it("rejects another user's account", async () => {
+      const other = await signUp(app);
+      await other.agent
+        .post('/api/transactions/import')
+        .send({ accountId: checking, csv })
+        .expect(400);
+    });
+  });
+
   describe('update and delete', () => {
     it('updates fields and keeps the balance in sync', async () => {
       const { transaction } = (

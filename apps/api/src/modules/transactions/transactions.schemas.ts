@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { amountCents, id, isoDate } from '../../lib/validation.js';
+import { DATE_FORMATS } from './csv-import.js';
 
 export const TRANSACTION_TYPES = ['income', 'expense', 'transfer'] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
@@ -52,6 +53,12 @@ export const listTransactionsQuery = z.object({
 });
 
 export const exportTransactionsQuery = listTransactionsQuery.omit({ page: true, pageSize: true });
+
+export const importTransactionsSchema = z.object({
+  accountId: id,
+  csv: z.string().min(1).max(1_500_000, 'The file is too large (1.5 MB max)'),
+  dateFormat: z.enum(DATE_FORMATS).default('YMD'),
+});
 
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;

@@ -178,6 +178,33 @@ export class TransactionsRepository {
     return rows[0]!;
   }
 
+  /** Inserts many transactions in one statement. */
+  async createMany(userId: string, inputs: CreateTransactionInput[]): Promise<void> {
+    if (inputs.length === 0) return;
+    const params: unknown[] = [userId];
+    const values = inputs.map((input) => {
+      params.push(
+        input.accountId,
+        input.transferAccountId,
+        input.categoryId,
+        input.type,
+        input.amount,
+        input.date,
+        input.payee,
+        input.notes,
+      );
+      const n = params.length;
+      const placeholders = Array.from({ length: 8 }, (_, k) => `$${n - 7 + k}`);
+      return `($1, ${placeholders.join(', ')})`;
+    });
+    await this.db.query(
+      `INSERT INTO transactions
+         (user_id, account_id, transfer_account_id, category_id, type, amount, date, payee, notes)
+       VALUES ${values.join(', ')}`,
+      params,
+    );
+  }
+
   async update(
     userId: string,
     id: string,

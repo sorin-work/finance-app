@@ -14,7 +14,7 @@ export function toCsv(rows: ReadonlyArray<ReadonlyArray<string | number>>): stri
 }
 
 export function parseCsv(text: string): string[][] {
-  const input = text.startsWith('﻿') ? text.slice(1) : text;
+  const input = text.startsWith('\uFEFF') ? text.slice(1) : text;
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';

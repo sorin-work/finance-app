@@ -5,6 +5,7 @@ import { currentUserId } from '../../middleware/auth.js';
 import {
   createTransactionSchema,
   exportTransactionsQuery,
+  importTransactionsSchema,
   listTransactionsQuery,
   updateTransactionSchema,
 } from './transactions.schemas.js';
@@ -22,6 +23,11 @@ export function transactionsRoutes(transactions: TransactionsService): Router {
     const filters = exportTransactionsQuery.parse(req.query);
     const csv = await transactions.exportCsv(currentUserId(req), filters);
     res.type('text/csv; charset=utf-8').attachment(`transactions-${todayISO()}.csv`).send(csv);
+  });
+
+  router.post('/import', async (req, res) => {
+    const input = importTransactionsSchema.parse(req.body);
+    res.json(await transactions.importCsv(currentUserId(req), input));
   });
 
   router.post('/', async (req, res) => {
