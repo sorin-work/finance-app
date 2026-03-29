@@ -1174,3 +1174,25 @@ textarea {
 .filters__search {
   flex: 2 1 220px !important;
 }
+
+a.button {
+  text-decoration: none;
+}
+
+.import-help {
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.import-result__skipped {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+input[type='file'] {
+  height: auto;
+  padding: 8px;
+}

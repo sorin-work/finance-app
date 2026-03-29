@@ -5,6 +5,7 @@ import { ApiError } from '../api/client';
 import {
   createTransaction,
   deleteTransaction,
+  exportUrl,
   fetchTransactions,
   updateTransaction,
   type TransactionFilters,
@@ -13,6 +14,7 @@ import {
 import type { Transaction, TransactionType } from '../api/types';
 import { useUser } from '../auth/AuthContext';
 import { PlusIcon } from '../components/icons';
+import { ImportDialog } from '../components/ImportDialog';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
 import { TransactionForm } from '../components/TransactionForm';
@@ -34,6 +36,7 @@ export function TransactionsPage() {
   const categories = useCategories();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Editing>(null);
+  const [importing, setImporting] = useState(false);
 
   const filters: TransactionFilters = {
     from: params.get('from') ?? undefined,
@@ -99,6 +102,8 @@ export function TransactionsPage() {
     setParams(next);
   }
 
+  const { page: _page, pageSize: _pageSize, ...exportFilters } = filters;
+
   // Typing updates the URL (and the query) once the user pauses.
   const [search, setSearch] = useState(params.get('q') ?? '');
   const urlSearch = params.get('q') ?? '';
@@ -130,14 +135,26 @@ export function TransactionsPage() {
         title="Transactions"
         description="Everything coming in and going out."
         actions={
-          <button
-            className="button button--primary"
-            onClick={() => setEditing({ mode: 'create' })}
-            disabled={!accounts.data?.length}
-            title={accounts.data?.length ? undefined : 'Add an account first'}
-          >
-            <PlusIcon /> Add transaction
-          </button>
+          <>
+            <a className="button" href={exportUrl(exportFilters)} download>
+              Export
+            </a>
+            <button
+              className="button"
+              onClick={() => setImporting(true)}
+              disabled={!accounts.data?.length}
+            >
+              Import
+            </button>
+            <button
+              className="button button--primary"
+              onClick={() => setEditing({ mode: 'create' })}
+              disabled={!accounts.data?.length}
+              title={accounts.data?.length ? undefined : 'Add an account first'}
+            >
+              <PlusIcon /> Add transaction
+            </button>
+          </>
         }
       />
 
@@ -301,6 +318,10 @@ export function TransactionsPage() {
             Next
           </button>
         </nav>
+      )}
+
+      {importing && accounts.data && (
+        <ImportDialog accounts={accounts.data} onClose={() => setImporting(false)} />
       )}
 
       {editing && accounts.data && categories.data && (

@@ -38,6 +38,26 @@ export async function updateTransaction(
   return (await api.patch<{ transaction: Transaction }>(`/transactions/${id}`, input)).transaction;
 }
 
+export type DateFormat = 'YMD' | 'MDY' | 'DMY';
+
+export interface ImportResult {
+  imported: number;
+  skipped: { line: number; reason: string }[];
+}
+
+export function importTransactions(input: {
+  accountId: string;
+  csv: string;
+  dateFormat: DateFormat;
+}): Promise<ImportResult> {
+  return api.post<ImportResult>('/transactions/import', input);
+}
+
+/** Download link for a CSV of the transactions matching the filters. */
+export function exportUrl(filters: Omit<TransactionFilters, 'page' | 'pageSize'>): string {
+  return `/api/transactions/export${toQuery({ ...filters })}`;
+}
+
 export function deleteTransaction(id: string): Promise<void> {
   return api.delete(`/transactions/${id}`);
 }
