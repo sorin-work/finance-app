@@ -115,7 +115,11 @@ export function TransactionsPage() {
   }, [search, urlSearch]);
 
   function goToPage(page: number) {
-    setParams({ page: String(page) });
+    const next = new URLSearchParams(params);
+    if (page > 1) next.set('page', String(page));
+    else next.delete('page');
+    setParams(next);
+    window.scrollTo({ top: 0 });
   }
 
   const data = transactions.data;
