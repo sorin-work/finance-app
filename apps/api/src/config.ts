@@ -12,6 +12,8 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+  /** Login and signup attempts allowed per IP every 15 minutes. */
+  AUTH_RATE_LIMIT: z.coerce.number().int().min(1).default(20),
   RECURRING_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(60),
   SEED_DEMO: z
     .enum(['true', 'false'])
@@ -28,6 +30,7 @@ export interface Config {
   sessionTtlDays: number;
   cookieSecure: boolean;
   bcryptRounds: number;
+  authRateLimit: number;
   /** How often to generate due recurring transactions; 0 disables the timer. */
   recurringIntervalMinutes: number;
   /** Create the demo user and sample data on startup if it does not exist yet. */
@@ -50,6 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     sessionTtlDays: e.SESSION_TTL_DAYS,
     cookieSecure: e.COOKIE_SECURE,
     bcryptRounds: e.BCRYPT_ROUNDS,
+    authRateLimit: e.AUTH_RATE_LIMIT,
     recurringIntervalMinutes: e.RECURRING_INTERVAL_MINUTES,
     seedDemo: e.SEED_DEMO,
   };

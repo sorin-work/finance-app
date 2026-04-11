@@ -92,6 +92,23 @@ describe('auth routes', () => {
     });
   });
 
+  describe('rate limiting', () => {
+    it('blocks repeated login attempts from the same client', async () => {
+      const limited = buildTestApp(db, { authRateLimit: 3 });
+      for (let i = 0; i < 3; i++) {
+        await request(limited)
+          .post('/api/auth/login')
+          .send({ email: 'x@example.com', password: 'guess' })
+          .expect(401);
+      }
+      const res = await request(limited)
+        .post('/api/auth/login')
+        .send({ email: 'x@example.com', password: 'guess' });
+      expect(res.status).toBe(429);
+      expect(res.headers['retry-after']).toBeDefined();
+    });
+  });
+
   describe('session', () => {
     it('returns the current user from the cookie', async () => {
       const { agent, user } = await signUp(app);

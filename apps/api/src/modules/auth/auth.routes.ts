@@ -2,6 +2,7 @@ import { Router, type CookieOptions, type Response } from 'express';
 import type { Config } from '../../config.js';
 import { unauthorized } from '../../lib/errors.js';
 import { SESSION_COOKIE, currentUserId, requireAuth } from '../../middleware/auth.js';
+import { rateLimit } from '../../middleware/rate-limit.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
 import type { AuthService } from './auth.service.js';
 import { signSessionToken } from './tokens.js';
@@ -16,6 +17,9 @@ export function authRoutes(auth: AuthService, config: Config): Router {
     path: '/',
   };
 
+  // Slows down password guessing and mass signups.
+  const limiter = rateLimit({ windowMs: 15 * 60_000, max: config.authRateLimit });
+
   function startSession(res: Response, userId: string) {
     const token = signSessionToken(userId, config.jwtSecret, config.sessionTtlDays);
     res.cookie(SESSION_COOKIE, token, {
@@ -24,14 +28,14 @@ export function authRoutes(auth: AuthService, config: Config): Router {
     });
   }
 
-  router.post('/register', async (req, res) => {
+  router.post('/register', limiter, async (req, res) => {
     const input = registerSchema.parse(req.body);
     const user = await auth.register(input);
     startSession(res, user.id);
     res.status(201).json({ user });
   });
 
-  router.post('/login', async (req, res) => {
+  router.post('/login', limiter, async (req, res) => {
     const input = loginSchema.parse(req.body);
     const user = await auth.login(input);
     startSession(res, user.id);
