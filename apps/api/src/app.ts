@@ -20,6 +20,8 @@ import { recurringRoutes } from './modules/recurring/recurring.routes.js';
 import { RecurringService } from './modules/recurring/recurring.service.js';
 import { reportsRoutes } from './modules/reports/reports.routes.js';
 import { ReportsService } from './modules/reports/reports.service.js';
+import { usersRoutes } from './modules/users/users.routes.js';
+import { UsersService } from './modules/users/users.service.js';
 import { transactionsRoutes } from './modules/transactions/transactions.routes.js';
 import { TransactionsService } from './modules/transactions/transactions.service.js';
 
@@ -56,6 +58,11 @@ export function createApp({ logger, db, config }: AppDeps) {
   app.use('/api/auth', authRoutes(auth, config));
 
   const authed = requireAuth(config.jwtSecret);
+  app.use(
+    '/api/users',
+    authed,
+    usersRoutes(new UsersService(db, { bcryptRounds: config.bcryptRounds }), config),
+  );
   app.use('/api/accounts', authed, accountsRoutes(new AccountsService(db)));
   app.use('/api/categories', authed, categoriesRoutes(new CategoriesService(db)));
   app.use('/api/transactions', authed, transactionsRoutes(new TransactionsService(db)));
