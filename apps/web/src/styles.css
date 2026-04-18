@@ -1196,3 +1196,20 @@ input[type='file'] {
   height: auto;
   padding: 8px;
 }
+
+.settings-form {
+  max-width: 640px;
+}
+
+.settings-section--danger {
+  border-color: #fecaca;
+}
+
+.button--danger:not(:disabled):hover {
+  background: #fef2f2;
+}
+
+input:disabled {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
