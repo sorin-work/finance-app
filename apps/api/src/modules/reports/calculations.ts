@@ -45,3 +45,51 @@ export function savingsRate(income: number, expenses: number): number | null {
   if (income <= 0) return null;
   return round1(((income - expenses) / income) * 100);
 }
+
+export interface AccountOpening {
+  id: string;
+  type: string;
+  openingBalance: number;
+}
+
+export interface MonthlyDelta {
+  accountId: string;
+  month: string;
+  delta: number;
+}
+
+export interface NetWorthPoint {
+  month: string;
+  assets: number;
+  /** Money owed, as a positive number. */
+  liabilities: number;
+  netWorth: number;
+}
+
+const LIABILITY_TYPES = new Set(['credit_card', 'loan']);
+
+/**
+ * Balance of every account at the end of each month, rolled up into assets,
+ * liabilities and net worth. `deltas` must include every month up to the last
+ * one requested, including months before the first.
+ */
+export function netWorthSeries(
+  accounts: ReadonlyArray<AccountOpening>,
+  deltas: ReadonlyArray<MonthlyDelta>,
+  months: ReadonlyArray<string>,
+): NetWorthPoint[] {
+  return months.map((month) => {
+    let assets = 0;
+    let liabilities = 0;
+    for (const account of accounts) {
+      const balance =
+        account.openingBalance +
+        deltas
+          .filter((d) => d.accountId === account.id && d.month <= month)
+          .reduce((sum, d) => sum + d.delta, 0);
+      if (LIABILITY_TYPES.has(account.type)) liabilities -= balance;
+      else assets += balance;
+    }
+    return { month, assets, liabilities, netWorth: assets - liabilities };
+  });
+}

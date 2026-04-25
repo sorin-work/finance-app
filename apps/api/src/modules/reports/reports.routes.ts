@@ -7,7 +7,7 @@ import type { ReportsService } from './reports.service.js';
 
 const summaryQuery = z.object({ month: isoMonth.optional() });
 
-const cashflowQuery = z.object({
+const seriesQuery = z.object({
   end: isoMonth.optional(),
   months: z.coerce.number().int().min(1).max(36).default(12),
 });
@@ -21,8 +21,13 @@ export function reportsRoutes(reports: ReportsService): Router {
   });
 
   router.get('/cashflow', async (req, res) => {
-    const { end = currentMonth(), months } = cashflowQuery.parse(req.query);
+    const { end = currentMonth(), months } = seriesQuery.parse(req.query);
     res.json({ months: await reports.cashflow(currentUserId(req), end, months) });
+  });
+
+  router.get('/net-worth', async (req, res) => {
+    const { end = currentMonth(), months } = seriesQuery.parse(req.query);
+    res.json({ months: await reports.netWorth(currentUserId(req), end, months) });
   });
 
   return router;

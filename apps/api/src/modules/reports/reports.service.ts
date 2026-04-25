@@ -1,8 +1,15 @@
 import type { Database } from '../../db/types.js';
-import { monthRange, shiftMonth } from '../../lib/dates.js';
+import { monthRange, monthsBetween, shiftMonth } from '../../lib/dates.js';
+import { AccountsRepository } from '../accounts/accounts.repository.js';
 import { CategoriesRepository } from '../categories/categories.repository.js';
 import { TransactionsRepository } from '../transactions/transactions.repository.js';
-import { categoryBreakdown, savingsRate, type CategorySpending } from './calculations.js';
+import {
+  categoryBreakdown,
+  netWorthSeries,
+  savingsRate,
+  type CategorySpending,
+  type NetWorthPoint,
+} from './calculations.js';
 import { ReportsRepository } from './reports.repository.js';
 
 export interface MonthSummary {
@@ -25,8 +32,10 @@ export class ReportsService {
   private readonly reports: ReportsRepository;
   private readonly transactions: TransactionsRepository;
   private readonly categories: CategoriesRepository;
+  private readonly accounts: AccountsRepository;
 
   constructor(db: Database) {
+    this.accounts = new AccountsRepository(db);
     this.reports = new ReportsRepository(db);
     this.transactions = new TransactionsRepository(db);
     this.categories = new CategoriesRepository(db);
@@ -48,6 +57,19 @@ export class ReportsService {
       savingsRate: savingsRate(totals.income, totals.expenses),
       byCategory: categoryBreakdown(spending, categories),
     };
+  }
+
+  /** Assets, liabilities and net worth at the end of each of the last `months` months. */
+  async netWorth(userId: string, endMonth: string, months: number): Promise<NetWorthPoint[]> {
+    const [accounts, deltas] = await Promise.all([
+      this.accounts.list(userId),
+      this.reports.accountDeltas(userId, monthRange(endMonth).end),
+    ]);
+    return netWorthSeries(
+      accounts.map((a) => ({ id: a.id, type: a.type, openingBalance: a.opening_balance })),
+      deltas.map((d) => ({ accountId: d.account_id, month: d.month, delta: d.delta })),
+      monthsBetween(shiftMonth(endMonth, -(months - 1)), endMonth),
+    );
   }
 
   /** Income vs expenses for the `months` months ending with `endMonth`. */
