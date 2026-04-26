@@ -33,3 +33,16 @@ export async function fetchCashflow(end: string, months = 12): Promise<CashflowM
     await api.get<{ months: CashflowMonth[] }>(`/reports/cashflow${toQuery({ end, months })}`)
   ).months;
 }
+
+export interface NetWorthPoint {
+  month: string;
+  assets: number;
+  liabilities: number;
+  netWorth: number;
+}
+
+export async function fetchNetWorth(end: string, months = 12): Promise<NetWorthPoint[]> {
+  return (
+    await api.get<{ months: NetWorthPoint[] }>(`/reports/net-worth${toQuery({ end, months })}`)
+  ).months;
+}

@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { useAuth, useUser } from '../auth/AuthContext';
 import {
+  ChartIcon,
   DashboardIcon,
   ListIcon,
   LogoutIcon,
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { to: '/budgets', label: 'Budgets', icon: PieIcon },
   { to: '/recurring', label: 'Recurring', icon: RepeatIcon },
   { to: '/goals', label: 'Goals', icon: TargetIcon },
+  { to: '/reports', label: 'Reports', icon: ChartIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 

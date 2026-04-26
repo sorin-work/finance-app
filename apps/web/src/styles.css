@@ -1213,3 +1213,32 @@ input:disabled {
   background: var(--surface-muted);
   color: var(--text-muted);
 }
+
+/* Reports */
+
+.section-card {
+  margin-bottom: 16px;
+}
+
+.segmented--inline {
+  margin-bottom: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.segmented--inline .segmented__option {
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.segmented--inline .segmented__option--active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.table tfoot td {
+  padding: 11px 16px;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}

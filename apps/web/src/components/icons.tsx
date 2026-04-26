@@ -68,6 +68,13 @@ export const TargetIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const ChartIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 3v18h18" />
+    <path d="m7 15 4-4 3 3 5-6" />
+  </Icon>
+);
+
 export const SettingsIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="12" cy="12" r="3" />
