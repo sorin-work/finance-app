@@ -12,6 +12,7 @@ import {
   TargetIcon,
   WalletIcon,
 } from './icons';
+import { ThemeToggle } from './ThemeToggle';
 
 interface NavItem {
   to: string;
@@ -66,6 +67,7 @@ export function Layout() {
               <span>{user.email}</span>
             </span>
           </div>
+          <ThemeToggle />
           <button className="nav-link nav-link--button" onClick={() => void logout()}>
             <LogoutIcon />
             Sign out
