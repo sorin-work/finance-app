@@ -63,6 +63,31 @@ describe('accounts routes', () => {
     expect(list.body.accounts[0].balance).toBe(3079_50);
   });
 
+  it('refuses to delete an account with transactions and allows archiving it', async () => {
+    const { agent } = await signUp(app);
+    const { account } = (await agent.post('/api/accounts').send({ name: 'Old', type: 'cash' }))
+      .body;
+    await agent
+      .post('/api/transactions')
+      .send({ accountId: account.id, type: 'expense', amount: 5_00, date: '2026-05-01' })
+      .expect(201);
+
+    const res = await agent.delete(`/api/accounts/${account.id}`).expect(409);
+    expect(res.body.error.message).toMatch(/Archive it instead/);
+
+    const archived = await agent
+      .patch(`/api/accounts/${account.id}`)
+      .send({ archived: true })
+      .expect(200);
+    expect(archived.body.account).toMatchObject({ archived: true, balance: -5_00 });
+
+    const blocked = await agent
+      .post('/api/transactions')
+      .send({ accountId: account.id, type: 'expense', amount: 1_00, date: '2026-05-02' });
+    expect(blocked.status).toBe(400);
+    expect(blocked.body.error.message).toBe('"Old" is archived');
+  });
+
   it('does not expose other users accounts', async () => {
     const alice = await signUp(app);
     const bob = await signUp(app);

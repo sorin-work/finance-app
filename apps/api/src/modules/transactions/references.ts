@@ -22,17 +22,17 @@ export async function checkTransactionReferences(
 ): Promise<void> {
   const accounts = new AccountsRepository(db);
 
-  if (!(await accounts.findById(userId, tx.accountId))) {
-    throw badRequest('Unknown account');
-  }
+  const account = await accounts.findById(userId, tx.accountId);
+  if (!account) throw badRequest('Unknown account');
+  if (account.archived) throw badRequest(`"${account.name}" is archived`);
   if (tx.type === 'transfer') {
     if (!tx.transferAccountId) throw badRequest('Transfers need a destination account');
     if (tx.transferAccountId === tx.accountId) {
       throw badRequest('Cannot transfer money to the same account');
     }
-    if (!(await accounts.findById(userId, tx.transferAccountId))) {
-      throw badRequest('Unknown destination account');
-    }
+    const destination = await accounts.findById(userId, tx.transferAccountId);
+    if (!destination) throw badRequest('Unknown destination account');
+    if (destination.archived) throw badRequest(`"${destination.name}" is archived`);
     if (tx.categoryId) throw badRequest('Transfers cannot have a category');
     return;
   }

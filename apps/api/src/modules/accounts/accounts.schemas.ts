@@ -23,6 +23,7 @@ export const updateAccountSchema = z
     name: z.string().trim().min(1).max(100),
     type: z.enum(ACCOUNT_TYPES),
     openingBalance: signedCents,
+    archived: z.boolean(),
   })
   .partial()
   .refine((value) => Object.keys(value).length > 0, 'Nothing to update');

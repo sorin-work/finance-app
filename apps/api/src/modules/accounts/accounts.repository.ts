@@ -8,6 +8,7 @@ export interface AccountRow {
   name: string;
   type: AccountType;
   opening_balance: number;
+  archived: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,6 +19,7 @@ export interface Account {
   type: AccountType;
   openingBalance: number;
   balance: number;
+  archived: boolean;
   createdAt: string;
 }
 
@@ -28,6 +30,7 @@ export function toAccount(row: AccountRow, balance = row.opening_balance): Accou
     type: row.type,
     openingBalance: row.opening_balance,
     balance,
+    archived: row.archived,
     createdAt: row.created_at.toISOString(),
   };
 }
@@ -37,7 +40,7 @@ export class AccountsRepository {
 
   async list(userId: string): Promise<AccountRow[]> {
     const { rows } = await this.db.query<AccountRow>(
-      'SELECT * FROM accounts WHERE user_id = $1 ORDER BY created_at, name',
+      'SELECT * FROM accounts WHERE user_id = $1 ORDER BY archived, created_at, name',
       [userId],
     );
     return rows;
@@ -87,7 +90,12 @@ export class AccountsRepository {
 
   async update(userId: string, id: string, input: UpdateAccountInput): Promise<AccountRow | null> {
     const set = setClause(
-      { name: input.name, type: input.type, opening_balance: input.openingBalance },
+      {
+        name: input.name,
+        type: input.type,
+        opening_balance: input.openingBalance,
+        archived: input.archived,
+      },
       3,
     );
     const { rows } = await this.db.query<AccountRow>(
@@ -95,6 +103,19 @@ export class AccountsRepository {
       [userId, id, ...set.params],
     );
     return rows[0] ?? null;
+  }
+
+  /** Whether any transaction or recurring rule refers to the account. */
+  async hasHistory(id: string): Promise<boolean> {
+    const { rows } = await this.db.query<{ used: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM transactions WHERE account_id = $1 OR transfer_account_id = $1
+       ) OR EXISTS (
+         SELECT 1 FROM recurring_transactions WHERE account_id = $1 OR transfer_account_id = $1
+       ) AS used`,
+      [id],
+    );
+    return rows[0]?.used ?? false;
   }
 
   async delete(userId: string, id: string): Promise<boolean> {

@@ -1,5 +1,5 @@
 import type { Database } from '../../db/types.js';
-import { notFound } from '../../lib/errors.js';
+import { conflict, notFound } from '../../lib/errors.js';
 import {
   AccountsRepository,
   toAccount,
@@ -39,8 +39,17 @@ export class AccountsService {
     return this.withBalance(userId, row);
   }
 
+  /**
+   * Deletes an account that has never been used. Accounts with history would
+   * take their transactions with them, so those have to be archived instead.
+   */
   async delete(userId: string, id: string): Promise<void> {
-    if (!(await this.accounts.delete(userId, id))) throw notFound('Account');
+    const row = await this.accounts.findById(userId, id);
+    if (!row) throw notFound('Account');
+    if (await this.accounts.hasHistory(id)) {
+      throw conflict('This account has transactions. Archive it instead to keep its history.');
+    }
+    await this.accounts.delete(userId, id);
   }
 
   private async withBalance(userId: string, row: AccountRow): Promise<Account> {
