@@ -20,7 +20,7 @@ const DATE_FORMATS: { value: DateFormat; label: string }[] = [
 
 export function ImportDialog({ accounts, onClose }: ImportDialogProps) {
   const queryClient = useQueryClient();
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? '');
+  const [accountId, setAccountId] = useState(accounts.find((a) => !a.archived)?.id ?? '');
   const [dateFormat, setDateFormat] = useState<DateFormat>('YMD');
   const [file, setFile] = useState<File | null>(null);
 
@@ -93,11 +93,13 @@ export function ImportDialog({ accounts, onClose }: ImportDialogProps) {
             <Field label="Into account">
               {(id) => (
                 <select id={id} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
+                  {accounts
+                    .filter((a) => !a.archived)
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
                 </select>
               )}
             </Field>

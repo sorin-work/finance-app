@@ -15,7 +15,10 @@ export async function createAccount(input: AccountInput): Promise<Account> {
   return (await api.post<{ account: Account }>('/accounts', input)).account;
 }
 
-export async function updateAccount(id: string, input: Partial<AccountInput>): Promise<Account> {
+export async function updateAccount(
+  id: string,
+  input: Partial<AccountInput & { archived: boolean }>,
+): Promise<Account> {
   return (await api.patch<{ account: Account }>(`/accounts/${id}`, input)).account;
 }
 

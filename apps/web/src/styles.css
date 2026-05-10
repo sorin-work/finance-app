@@ -1311,3 +1311,15 @@ input:disabled {
 .theme-toggle {
   margin-bottom: 4px;
 }
+
+.account-card--archived {
+  opacity: 0.75;
+}
+
+.account-card .badge + .badge {
+  margin-left: 6px;
+}
+
+.account-grid--spaced {
+  margin-top: 12px;
+}

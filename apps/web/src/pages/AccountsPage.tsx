@@ -8,6 +8,7 @@ import { AccountForm } from '../components/AccountForm';
 import { PlusIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
+import { invalidateFinancialData } from '../hooks/invalidate';
 import { ACCOUNTS_KEY, useAccounts } from '../hooks/useAccounts';
 import { ACCOUNT_TYPE_LABELS, isLiability } from '../lib/accounts';
 import { formatMoney } from '../lib/money';
@@ -19,6 +20,7 @@ export function AccountsPage() {
   const queryClient = useQueryClient();
   const accounts = useAccounts();
   const [editing, setEditing] = useState<Editing>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const save = useMutation({
     mutationFn: (input: AccountInput) =>
@@ -31,24 +33,60 @@ export function AccountsPage() {
 
   const remove = useMutation({
     mutationFn: deleteAccount,
-    onSuccess: () => queryClient.invalidateQueries(),
+    onSuccess: () => invalidateFinancialData(queryClient),
+  });
+
+  const archive = useMutation({
+    mutationFn: (account: Account) => updateAccount(account.id, { archived: !account.archived }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
   });
 
   const list = accounts.data ?? [];
-  const assets = list.filter((a) => !isLiability(a.type));
-  const liabilities = list.filter((a) => isLiability(a.type));
+  const open = list.filter((a) => !a.archived);
+  const archived = list.filter((a) => a.archived);
+  // Archived accounts still hold (or owe) money, so they count towards net worth.
   const netWorth = list.reduce((sum, a) => sum + a.balance, 0);
 
   function confirmDelete(account: Account) {
-    const ok = window.confirm(
-      `Delete "${account.name}"? All of its transactions will be deleted too.`,
-    );
-    if (ok) remove.mutate(account.id);
+    if (window.confirm(`Delete "${account.name}"?`)) remove.mutate(account.id);
   }
 
   function closeModal() {
     save.reset();
     setEditing(null);
+  }
+
+  function renderCard(account: Account) {
+    return (
+      <article
+        key={account.id}
+        className={`card account-card${account.archived ? ' account-card--archived' : ''}`}
+      >
+        <div className="account-card__top">
+          <div>
+            <h3>{account.name}</h3>
+            <span className="badge">{ACCOUNT_TYPE_LABELS[account.type]}</span>
+            {account.archived && <span className="badge">Archived</span>}
+          </div>
+          <span className={`account-card__balance ${account.balance < 0 ? 'negative' : ''}`}>
+            {formatMoney(account.balance, currency)}
+          </span>
+        </div>
+        <div className="account-card__actions">
+          {!account.archived && (
+            <button className="button" onClick={() => setEditing({ mode: 'edit', account })}>
+              Edit
+            </button>
+          )}
+          <button className="button" onClick={() => archive.mutate(account)}>
+            {account.archived ? 'Restore' : 'Archive'}
+          </button>
+          <button className="button button--danger" onClick={() => confirmDelete(account)}>
+            Delete
+          </button>
+        </div>
+      </article>
+    );
   }
 
   return (
@@ -65,6 +103,11 @@ export function AccountsPage() {
 
       {accounts.isPending && <p className="muted">Loading accounts…</p>}
       {accounts.isError && <div className="alert alert--error">Could not load accounts.</div>}
+      {remove.error && (
+        <div className="alert alert--error" role="alert">
+          {remove.error instanceof ApiError ? remove.error.message : 'Could not delete the account'}
+        </div>
+      )}
 
       {accounts.isSuccess && list.length === 0 && (
         <div className="card empty-state">
@@ -83,46 +126,27 @@ export function AccountsPage() {
           </div>
 
           {[
-            { title: 'Assets', items: assets },
-            { title: 'Liabilities', items: liabilities },
+            { title: 'Assets', items: open.filter((a) => !isLiability(a.type)) },
+            { title: 'Liabilities', items: open.filter((a) => isLiability(a.type)) },
           ]
             .filter((group) => group.items.length > 0)
             .map((group) => (
               <section key={group.title} className="section">
                 <h2 className="section__title">{group.title}</h2>
-                <div className="account-grid">
-                  {group.items.map((account) => (
-                    <article key={account.id} className="card account-card">
-                      <div className="account-card__top">
-                        <div>
-                          <h3>{account.name}</h3>
-                          <span className="badge">{ACCOUNT_TYPE_LABELS[account.type]}</span>
-                        </div>
-                        <span
-                          className={`account-card__balance ${account.balance < 0 ? 'negative' : ''}`}
-                        >
-                          {formatMoney(account.balance, currency)}
-                        </span>
-                      </div>
-                      <div className="account-card__actions">
-                        <button
-                          className="button"
-                          onClick={() => setEditing({ mode: 'edit', account })}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="button button--danger"
-                          onClick={() => confirmDelete(account)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                <div className="account-grid">{group.items.map(renderCard)}</div>
               </section>
             ))}
+
+          {archived.length > 0 && (
+            <section className="section">
+              <button className="link-button" onClick={() => setShowArchived((v) => !v)}>
+                {showArchived ? 'Hide' : 'Show'} archived accounts ({archived.length})
+              </button>
+              {showArchived && (
+                <div className="account-grid account-grid--spaced">{archived.map(renderCard)}</div>
+              )}
+            </section>
+          )}
         </>
       )}
 

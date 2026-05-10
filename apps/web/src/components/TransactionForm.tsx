@@ -37,7 +37,9 @@ export function TransactionForm({
   const [type, setType] = useState<TransactionType>(transaction?.type ?? 'expense');
   const [amount, setAmount] = useState(transaction ? centsToInput(transaction.amount) : '');
   const [date, setDate] = useState(transaction?.date ?? today());
-  const [accountId, setAccountId] = useState(transaction?.accountId ?? accounts[0]?.id ?? '');
+  const [accountId, setAccountId] = useState(
+    transaction?.accountId ?? accounts.find((a) => !a.archived)?.id ?? '',
+  );
   const [transferAccountId, setTransferAccountId] = useState(transaction?.transferAccountId ?? '');
   const [categoryId, setCategoryId] = useState(transaction?.categoryId ?? '');
   const [payee, setPayee] = useState(transaction?.payee ?? '');
@@ -45,6 +47,10 @@ export function TransactionForm({
   const [errors, setErrors] = useState<Errors>({});
 
   const categoryOptions = categories.filter((c) => c.kind === type);
+  const accountOptions = accounts.filter(
+    (a) =>
+      !a.archived || a.id === transaction?.accountId || a.id === transaction?.transferAccountId,
+  );
 
   function changeType(next: TransactionType) {
     setType(next);
@@ -124,7 +130,7 @@ export function TransactionForm({
         <Field label={type === 'transfer' ? 'From account' : 'Account'} error={errors.accountId}>
           {(id) => (
             <select id={id} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-              {accounts.map((a) => (
+              {accountOptions.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
                 </option>
@@ -141,7 +147,7 @@ export function TransactionForm({
                 onChange={(e) => setTransferAccountId(e.target.value)}
               >
                 <option value="">Choose…</option>
-                {accounts.map((a) => (
+                {accountOptions.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
                   </option>

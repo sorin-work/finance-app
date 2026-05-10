@@ -16,6 +16,7 @@ export interface Account {
   type: AccountType;
   openingBalance: number;
   balance: number;
+  archived: boolean;
   createdAt: string;
 }
 

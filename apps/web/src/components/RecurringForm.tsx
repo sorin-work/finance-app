@@ -29,7 +29,9 @@ export function RecurringForm({
 }: RecurringFormProps) {
   const [type, setType] = useState<TransactionType>(recurring?.type ?? 'expense');
   const [amount, setAmount] = useState(recurring ? centsToInput(recurring.amount) : '');
-  const [accountId, setAccountId] = useState(recurring?.accountId ?? accounts[0]?.id ?? '');
+  const [accountId, setAccountId] = useState(
+    recurring?.accountId ?? accounts.find((a) => !a.archived)?.id ?? '',
+  );
   const [transferAccountId, setTransferAccountId] = useState(recurring?.transferAccountId ?? '');
   const [categoryId, setCategoryId] = useState(recurring?.categoryId ?? '');
   const [payee, setPayee] = useState(recurring?.payee ?? '');
@@ -134,11 +136,13 @@ export function RecurringForm({
         <Field label={type === 'transfer' ? 'From account' : 'Account'}>
           {(id) => (
             <select id={id} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
+              {accounts
+                .filter((a) => !a.archived)
+                .map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
             </select>
           )}
         </Field>
@@ -151,11 +155,13 @@ export function RecurringForm({
                 onChange={(e) => setTransferAccountId(e.target.value)}
               >
                 <option value="">Choose…</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
+                {accounts
+                  .filter((a) => !a.archived)
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
               </select>
             )}
           </Field>
