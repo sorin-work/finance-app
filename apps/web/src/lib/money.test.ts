@@ -28,13 +28,23 @@ describe('parseMoneyInput', () => {
     ['0.01', 1],
     ['-3.20', -320],
     [' 7 ', 700],
+    ['1,234.56', 123456],
+    ['1.234,56', 123456],
+    ['1 234,56', 123456],
+    ['1,234', 123400],
+    ['12,345,678.9', 1234567890],
+    ['$5', 500],
+    ['-€9,99', -999],
   ])('%j -> %i', (input, cents) => {
     expect(parseMoneyInput(input)).toBe(cents);
   });
 
-  it.each(['', 'abc', '1.234', '12.', '.5', '--1'])('rejects %j', (input) => {
-    expect(parseMoneyInput(input)).toBeNull();
-  });
+  it.each(['', 'abc', '12.', '.5', '--1', '1,23,456', '1.2.3', '1,2345', '12.345,6.7'])(
+    'rejects %j',
+    (input) => {
+      expect(parseMoneyInput(input)).toBeNull();
+    },
+  );
 });
 
 describe('centsToInput', () => {
