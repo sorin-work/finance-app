@@ -1323,3 +1323,51 @@ input:disabled {
 .account-grid--spaced {
   margin-top: 12px;
 }
+
+/* Loading placeholders */
+
+.skeleton {
+  display: inline-block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 25%,
+    var(--border) 50%,
+    var(--surface-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+.skeleton--card {
+  display: block;
+  border-radius: var(--radius);
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Labels are bold; the controls inside them should not be. */
+.filters input,
+.filters select {
+  font-weight: 400;
+}

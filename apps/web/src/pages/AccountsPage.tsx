@@ -8,6 +8,7 @@ import { AccountForm } from '../components/AccountForm';
 import { PlusIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
+import { Skeleton } from '../components/Skeleton';
 import { invalidateFinancialData } from '../hooks/invalidate';
 import { ACCOUNTS_KEY, useAccounts } from '../hooks/useAccounts';
 import { ACCOUNT_TYPE_LABELS, isLiability } from '../lib/accounts';
@@ -101,7 +102,13 @@ export function AccountsPage() {
         }
       />
 
-      {accounts.isPending && <p className="muted">Loading accounts…</p>}
+      {accounts.isPending && (
+        <div className="account-grid">
+          {Array.from({ length: 3 }, (_, i) => (
+            <Skeleton key={i} height={120} className="skeleton--card" />
+          ))}
+        </div>
+      )}
       {accounts.isError && <div className="alert alert--error">Could not load accounts.</div>}
       {remove.error && (
         <div className="alert alert--error" role="alert">

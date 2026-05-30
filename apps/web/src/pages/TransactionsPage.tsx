@@ -17,6 +17,7 @@ import { PlusIcon } from '../components/icons';
 import { ImportDialog } from '../components/ImportDialog';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
+import { SkeletonRows } from '../components/Skeleton';
 import { TransactionForm } from '../components/TransactionForm';
 import { invalidateFinancialData } from '../hooks/invalidate';
 import { useAccounts } from '../hooks/useAccounts';
@@ -254,6 +255,7 @@ export function TransactionsPage() {
             </tr>
           </thead>
           <tbody>
+            {transactions.isPending && <SkeletonRows columns={5} />}
             {data?.items.map((t) => {
               const category = t.categoryId ? categoryById.get(t.categoryId) : undefined;
               return (

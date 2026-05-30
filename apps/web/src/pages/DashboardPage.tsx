@@ -8,6 +8,7 @@ import { CashflowChart } from '../components/charts/CashflowChart';
 import { SpendingDonut } from '../components/charts/SpendingDonut';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
+import { Skeleton } from '../components/Skeleton';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCategories } from '../hooks/useCategories';
 import { currentMonth, formatDate, formatMonth } from '../lib/dates';
@@ -61,18 +62,20 @@ export function DashboardPage() {
           <span
             className={`stat__value ${netWorth !== undefined && netWorth < 0 ? 'negative' : ''}`}
           >
-            {netWorth === undefined ? '—' : money(netWorth)}
+            {netWorth === undefined ? <Skeleton width={140} height={30} /> : money(netWorth)}
           </span>
         </div>
         <div className="card stat">
           <span className="stat__label">Income this month</span>
           <span className="stat__value positive">
-            {summary.data ? money(summary.data.income) : '—'}
+            {summary.data ? money(summary.data.income) : <Skeleton width={120} height={30} />}
           </span>
         </div>
         <div className="card stat">
           <span className="stat__label">Spent this month</span>
-          <span className="stat__value">{summary.data ? money(summary.data.expenses) : '—'}</span>
+          <span className="stat__value">
+            {summary.data ? money(summary.data.expenses) : <Skeleton width={120} height={30} />}
+          </span>
         </div>
         <div className="card stat">
           <span className="stat__label">Savings rate</span>
@@ -161,6 +164,13 @@ export function DashboardPage() {
           </div>
           {recent.data && recent.data.items.length === 0 && (
             <p className="muted">Nothing here yet. Add your first transaction to get started.</p>
+          )}
+          {recent.isPending && (
+            <div className="skeleton-stack">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} height={36} />
+              ))}
+            </div>
           )}
           <ul className="recent">
             {recent.data?.items.map((t) => {
