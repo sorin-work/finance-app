@@ -1371,3 +1371,14 @@ input:disabled {
 .filters select {
   font-weight: 400;
 }
+
+.alert--warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+  border: 1px solid color-mix(in srgb, var(--warning-text) 25%, transparent);
+}
+
+.alert a {
+  color: inherit;
+  font-weight: 600;
+}

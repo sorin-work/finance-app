@@ -45,6 +45,7 @@ export function DashboardPage() {
   const money = (cents: number) => formatMoney(cents, user.currency);
   const netWorth = accounts.data?.reduce((sum, a) => sum + a.balance, 0);
   const categoryById = new Map((categories.data ?? []).map((c) => [c.id, c]));
+  const overspent = (budgets.data?.budgets ?? []).filter((b) => b.status === 'over');
   const watchedBudgets = [...(budgets.data?.budgets ?? [])]
     .sort((a, b) => b.percent - a.percent)
     .slice(0, 4);
@@ -55,6 +56,19 @@ export function DashboardPage() {
         title={`${greeting()}, ${user.name.split(' ')[0]}`}
         description={`Here is how ${formatMonth(month)} is going.`}
       />
+
+      {overspent.length > 0 && (
+        <div className="alert alert--warning" role="status">
+          <strong>Over budget:</strong>{' '}
+          {overspent
+            .map(
+              (b) =>
+                `${categoryById.get(b.categoryId)?.name ?? 'a category'} (${money(-b.remaining)} over)`,
+            )
+            .join(', ')}
+          . <Link to="/budgets">Review budgets</Link>
+        </div>
+      )}
 
       <div className="stat-row">
         <div className="card stat">
