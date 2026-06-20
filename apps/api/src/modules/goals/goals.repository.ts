@@ -53,10 +53,19 @@ export class GoalsRepository {
     return rows[0] ?? null;
   }
 
+  async findById(userId: string, id: string): Promise<GoalRow | null> {
+    const { rows } = await this.db.query<GoalRow>(
+      'SELECT * FROM goals WHERE user_id = $1 AND id = $2',
+      [userId, id],
+    );
+    return rows[0] ?? null;
+  }
+
+  /** Adds to the saved amount unless that would take it below zero. */
   async addToSaved(userId: string, id: string, amount: number): Promise<GoalRow | null> {
     const { rows } = await this.db.query<GoalRow>(
       `UPDATE goals SET saved_amount = saved_amount + $3, updated_at = now()
-       WHERE user_id = $1 AND id = $2
+       WHERE user_id = $1 AND id = $2 AND saved_amount + $3 >= 0
        RETURNING *`,
       [userId, id, amount],
     );

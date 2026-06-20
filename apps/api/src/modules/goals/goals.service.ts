@@ -1,6 +1,7 @@
 import type { Database } from '../../db/types.js';
 import { todayISO } from '../../lib/dates.js';
-import { notFound } from '../../lib/errors.js';
+import { badRequest, notFound } from '../../lib/errors.js';
+import { centsToDecimal } from '../../lib/money.js';
 import { GoalsRepository, type GoalRow } from './goals.repository.js';
 import type { CreateGoalInput, UpdateGoalInput } from './goals.schemas.js';
 import { goalProjection, type GoalProjection } from './projection.js';
@@ -64,8 +65,13 @@ export class GoalsService {
   /** Adds money to a goal, or takes it out when `amount` is negative. */
   async contribute(userId: string, id: string, amount: number): Promise<Goal> {
     const row = await this.goals.addToSaved(userId, id, amount);
-    if (!row) throw notFound('Goal');
-    return toGoal(row, this.today());
+    if (row) return toGoal(row, this.today());
+
+    const goal = await this.goals.findById(userId, id);
+    if (!goal) throw notFound('Goal');
+    throw badRequest(
+      `Cannot withdraw more than the ${centsToDecimal(goal.saved_amount)} saved in "${goal.name}"`,
+    );
   }
 
   async delete(userId: string, id: string): Promise<void> {

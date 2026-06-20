@@ -64,6 +64,20 @@ describe('goals routes', () => {
     expect(res.body.goal.savedAmount).toBe(300_00);
   });
 
+  it('refuses to withdraw more than has been saved', async () => {
+    const { goal } = (
+      await agent
+        .post('/api/goals')
+        .send({ name: 'Trip', targetAmount: 2000_00, savedAmount: 50_00 })
+    ).body;
+    const res = await agent.post(`/api/goals/${goal.id}/contributions`).send({ amount: -80_00 });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe('Cannot withdraw more than the 50.00 saved in "Trip"');
+
+    const list = await agent.get('/api/goals');
+    expect(list.body.goals[0].savedAmount).toBe(50_00);
+  });
+
   it('updates and deletes goals', async () => {
     const { goal } = (await agent.post('/api/goals').send({ name: 'Car', targetAmount: 100 })).body;
     const res = await agent
