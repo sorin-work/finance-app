@@ -3,8 +3,12 @@
 A personal finance manager for keeping track of accounts, spending and income.
 
 - **Accounts**: checking, savings, credit cards, cash, investments and loans, with live balances
-- **Transactions**: income, expenses and transfers between accounts, with filters and pagination
+- **Transactions**: income, expenses and transfers, with search, filters, CSV import and export
 - **Categories**: a sensible default set on signup, fully editable
+- **Budgets**: monthly limits per category with progress and overspend warnings
+- **Recurring transactions**: rent, salary and subscriptions added automatically
+- **Goals**: savings targets with the monthly amount needed to hit them on time
+- **Reports**: cash flow, spending by category and net worth over time
 
 ## Stack
 
@@ -100,6 +104,10 @@ apps/
       components/      shared UI
       pages/           one component per route
 ```
+
+## API
+
+See [docs/api.md](docs/api.md) for every endpoint, request body and response.
 
 ## Conventions
 
