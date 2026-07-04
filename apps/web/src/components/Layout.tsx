@@ -1,11 +1,13 @@
-import type { ComponentType, SVGProps } from 'react';
-import { NavLink, Outlet } from 'react-router';
+import { useState, type ComponentType, type SVGProps } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth, useUser } from '../auth/AuthContext';
 import {
   ChartIcon,
+  CloseIcon,
   DashboardIcon,
   ListIcon,
   LogoutIcon,
+  MenuIcon,
   PieIcon,
   RepeatIcon,
   SettingsIcon,
@@ -34,11 +36,31 @@ const NAV: NavItem[] = [
 export function Layout() {
   const user = useUser();
   const { logout } = useAuth();
+  const location = useLocation();
+  // On small screens the sidebar is a drop-down menu that closes on navigation.
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const menuOpen = menuFor === location.pathname;
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="topbar">
         <div className="sidebar__brand">
+          <img src="/favicon.svg" alt="" width={28} height={28} />
+          <span>Finance</span>
+        </div>
+        <button
+          className="icon-button"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          aria-controls="sidebar"
+          onClick={() => setMenuFor(menuOpen ? null : location.pathname)}
+        >
+          {menuOpen ? <CloseIcon /> : <MenuIcon />}
+        </button>
+      </header>
+
+      <aside id="sidebar" className={`sidebar${menuOpen ? ' sidebar--open' : ''}`}>
+        <div className="sidebar__brand sidebar__brand--desktop">
           <img src="/favicon.svg" alt="" width={28} height={28} />
           <span>Finance</span>
         </div>
