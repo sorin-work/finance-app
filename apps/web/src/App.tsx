@@ -1,16 +1,49 @@
+import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { GuestOnly, RequireAuth } from './auth/guards';
 import { Layout } from './components/Layout';
-import { AccountsPage } from './pages/AccountsPage';
-import { BudgetsPage } from './pages/BudgetsPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { GoalsPage } from './pages/GoalsPage';
-import { RecurringPage } from './pages/RecurringPage';
-import { ReportsPage } from './pages/ReportsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { TransactionsPage } from './pages/TransactionsPage';
+
+// Pages behind the login are split into their own chunks; the charting
+// library in particular is only downloaded when a page with charts opens.
+function page<T extends string>(name: T, load: () => Promise<Record<T, ComponentType>>) {
+  return lazy(async () => ({ default: (await load())[name] }));
+}
+
+const DashboardPage = page('DashboardPage', () => import('./pages/DashboardPage'));
+const TransactionsPage = page('TransactionsPage', () => import('./pages/TransactionsPage'));
+const AccountsPage = page('AccountsPage', () => import('./pages/AccountsPage'));
+const BudgetsPage = page('BudgetsPage', () => import('./pages/BudgetsPage'));
+const RecurringPage = page('RecurringPage', () => import('./pages/RecurringPage'));
+const GoalsPage = page('GoalsPage', () => import('./pages/GoalsPage'));
+const ReportsPage = page('ReportsPage', () => import('./pages/ReportsPage'));
+const SettingsPage = page('SettingsPage', () => import('./pages/SettingsPage'));
+
+function Loading({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="page-loading" aria-busy="true">
+          <span className="spinner" aria-label="Loading" />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
+
+const ROUTES: { path?: string; Page: ComponentType }[] = [
+  { Page: DashboardPage },
+  { path: 'transactions', Page: TransactionsPage },
+  { path: 'accounts', Page: AccountsPage },
+  { path: 'budgets', Page: BudgetsPage },
+  { path: 'recurring', Page: RecurringPage },
+  { path: 'goals', Page: GoalsPage },
+  { path: 'reports', Page: ReportsPage },
+  { path: 'settings', Page: SettingsPage },
+];
 
 export function App() {
   return (
@@ -38,14 +71,18 @@ export function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<DashboardPage />} />
-        <Route path="transactions" element={<TransactionsPage />} />
-        <Route path="accounts" element={<AccountsPage />} />
-        <Route path="budgets" element={<BudgetsPage />} />
-        <Route path="recurring" element={<RecurringPage />} />
-        <Route path="goals" element={<GoalsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        {ROUTES.map(({ path, Page }) => (
+          <Route
+            key={path ?? 'index'}
+            index={path === undefined}
+            path={path}
+            element={
+              <Loading>
+                <Page />
+              </Loading>
+            }
+          />
+        ))}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
