@@ -3,6 +3,7 @@ name: finance-app
 services:
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: finance
       POSTGRES_PASSWORD: finance
@@ -21,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgres://finance:finance@db:5432/finance
       JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-me-0123456789}
@@ -37,8 +39,10 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - '${WEB_PORT:-8080}:80'
 
