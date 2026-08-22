@@ -164,6 +164,13 @@ export class TransactionsService {
     return { imported: toInsert.length, skipped: skipped.sort((a, b) => a.line - b.line) };
   }
 
+  payeeSuggestions(
+    userId: string,
+    query: { q: string; type?: 'income' | 'expense'; limit: number },
+  ) {
+    return this.transactions.payeeSuggestions(userId, query.q, query.type, query.limit);
+  }
+
   async delete(userId: string, id: string): Promise<void> {
     if (!(await this.transactions.delete(userId, id))) throw notFound('Transaction');
   }

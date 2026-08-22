@@ -54,6 +54,12 @@ export const listTransactionsQuery = z.object({
 
 export const exportTransactionsQuery = listTransactionsQuery.omit({ page: true, pageSize: true });
 
+export const payeeSuggestionsQuery = z.object({
+  q: z.string().trim().max(100).default(''),
+  type: z.enum(['income', 'expense']).optional(),
+  limit: z.coerce.number().int().min(1).max(25).default(8),
+});
+
 export const importTransactionsSchema = z.object({
   accountId: id,
   csv: z.string().min(1).max(1_500_000, 'The file is too large (1.5 MB max)'),

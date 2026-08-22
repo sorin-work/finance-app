@@ -7,6 +7,7 @@ import {
   exportTransactionsQuery,
   importTransactionsSchema,
   listTransactionsQuery,
+  payeeSuggestionsQuery,
   updateTransactionSchema,
 } from './transactions.schemas.js';
 import type { TransactionsService } from './transactions.service.js';
@@ -17,6 +18,11 @@ export function transactionsRoutes(transactions: TransactionsService): Router {
   router.get('/', async (req, res) => {
     const query = listTransactionsQuery.parse(req.query);
     res.json(await transactions.list(currentUserId(req), query));
+  });
+
+  router.get('/payees', async (req, res) => {
+    const query = payeeSuggestionsQuery.parse(req.query);
+    res.json({ payees: await transactions.payeeSuggestions(currentUserId(req), query) });
   });
 
   router.get('/export', async (req, res) => {

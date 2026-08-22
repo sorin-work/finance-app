@@ -189,6 +189,46 @@ describe('transactions routes', () => {
     });
   });
 
+  describe('payee suggestions', () => {
+    beforeEach(async () => {
+      const rows = [
+        { payee: 'FreshMart', date: '2026-08-01', categoryId: category('Groceries') },
+        { payee: 'FreshMart', date: '2026-08-08', categoryId: category('Shopping') },
+        { payee: 'Fresh Juice Bar', date: '2026-08-02', categoryId: category('Dining Out') },
+        { payee: 'Fuel Stop', date: '2026-08-03', categoryId: category('Transport') },
+      ];
+      for (const row of rows) {
+        await agent
+          .post('/api/transactions')
+          .send({ accountId: checking, type: 'expense', amount: 1_00, ...row })
+          .expect(201);
+      }
+    });
+
+    it('suggests matching payees, most used first, with their latest category', async () => {
+      const res = await agent.get('/api/transactions/payees?q=fresh').expect(200);
+      expect(res.body.payees).toEqual([
+        {
+          payee: 'FreshMart',
+          categoryId: category('Shopping'),
+          uses: 2,
+          lastUsed: '2026-08-08',
+        },
+        {
+          payee: 'Fresh Juice Bar',
+          categoryId: category('Dining Out'),
+          uses: 1,
+          lastUsed: '2026-08-02',
+        },
+      ]);
+    });
+
+    it('filters by type and limits the results', async () => {
+      expect((await agent.get('/api/transactions/payees?type=income')).body.payees).toEqual([]);
+      expect((await agent.get('/api/transactions/payees?limit=1')).body.payees).toHaveLength(1);
+    });
+  });
+
   describe('export', () => {
     it('downloads matching transactions as csv', async () => {
       await agent.post('/api/transactions').send({

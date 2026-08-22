@@ -91,6 +91,14 @@ export interface ExportRow {
   notes: string;
 }
 
+export interface PayeeSuggestion {
+  payee: string;
+  /** Category used the last time this payee appeared. */
+  categoryId: string | null;
+  uses: number;
+  lastUsed: string;
+}
+
 export class TransactionsRepository {
   constructor(private readonly db: Queryable) {}
 
@@ -131,6 +139,39 @@ export class TransactionsRepository {
       where.params,
     );
     return rows;
+  }
+
+  /** Payees the user has used before that start with `prefix`, most frequent first. */
+  async payeeSuggestions(
+    userId: string,
+    prefix: string,
+    type: TransactionType | undefined,
+    limit: number,
+  ): Promise<PayeeSuggestion[]> {
+    const { rows } = await this.db.query<{
+      payee: string;
+      category_id: string | null;
+      uses: number;
+      last_used: string;
+    }>(
+      `SELECT payee,
+              (array_agg(category_id ORDER BY date DESC, created_at DESC))[1] AS category_id,
+              count(*) AS uses,
+              max(date) AS last_used
+       FROM transactions
+       WHERE user_id = $1 AND payee <> '' AND payee ILIKE $2
+         AND ($3::text IS NULL OR type = $3::text)
+       GROUP BY payee
+       ORDER BY count(*) DESC, max(date) DESC
+       LIMIT $4`,
+      [userId, `${prefix.replace(/[\\%_]/g, (c) => `\\${c}`)}%`, type ?? null, limit],
+    );
+    return rows.map((r) => ({
+      payee: r.payee,
+      categoryId: r.category_id,
+      uses: r.uses,
+      lastUsed: r.last_used,
+    }));
   }
 
   /** Total expenses per category between two dates. Uncategorized spending is keyed by null. */
