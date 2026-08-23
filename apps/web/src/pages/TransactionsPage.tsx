@@ -6,6 +6,7 @@ import {
   createTransaction,
   deleteTransaction,
   exportUrl,
+  fetchPayeeSuggestions,
   fetchTransactions,
   updateTransaction,
   type TransactionFilters,
@@ -343,6 +344,7 @@ export function TransactionsPage() {
             error={save.error instanceof ApiError ? save.error.message : null}
             onSubmit={(input) => save.mutate(input)}
             onCancel={closeModal}
+            suggestPayees={fetchPayeeSuggestions}
             onDelete={
               editing.mode === 'edit' ? () => confirmDelete(editing.transaction) : undefined
             }

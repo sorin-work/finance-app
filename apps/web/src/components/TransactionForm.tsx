@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import type { TransactionInput } from '../api/transactions';
+import { useEffect, useId, useState, type FormEvent } from 'react';
+import type { PayeeSuggestion, TransactionInput } from '../api/transactions';
 import type { Account, Category, Transaction, TransactionType } from '../api/types';
 import { today } from '../lib/dates';
 import { centsToInput, parseMoneyInput } from '../lib/money';
@@ -14,6 +14,8 @@ interface TransactionFormProps {
   onSubmit: (input: TransactionInput) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /** Looks up payees used before, to offer them while typing. */
+  suggestPayees?: (q: string, type: 'income' | 'expense') => Promise<PayeeSuggestion[]>;
 }
 
 const TYPES: { value: TransactionType; label: string }[] = [
@@ -33,7 +35,9 @@ export function TransactionForm({
   onSubmit,
   onCancel,
   onDelete,
+  suggestPayees,
 }: TransactionFormProps) {
+  const listId = useId();
   const [type, setType] = useState<TransactionType>(transaction?.type ?? 'expense');
   const [amount, setAmount] = useState(transaction ? centsToInput(transaction.amount) : '');
   const [date, setDate] = useState(transaction?.date ?? today());
@@ -45,6 +49,29 @@ export function TransactionForm({
   const [payee, setPayee] = useState(transaction?.payee ?? '');
   const [notes, setNotes] = useState(transaction?.notes ?? '');
   const [errors, setErrors] = useState<Errors>({});
+  const [suggestions, setSuggestions] = useState<PayeeSuggestion[]>([]);
+
+  useEffect(() => {
+    if (!suggestPayees || type === 'transfer' || payee.trim().length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      suggestPayees(payee.trim(), type)
+        .then((result) => !cancelled && setSuggestions(result))
+        .catch(() => undefined);
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [payee, type, suggestPayees]);
+
+  function changePayee(value: string) {
+    setPayee(value);
+    // Picking a known payee fills in the category it was last filed under.
+    const match = suggestions.find((s) => s.payee.toLowerCase() === value.trim().toLowerCase());
+    const suggested = categories.find((c) => c.id === match?.categoryId);
+    if (!categoryId && suggested && suggested.kind === type) setCategoryId(suggested.id);
+  }
 
   const categoryOptions = categories.filter((c) => c.kind === type);
   const accountOptions = accounts.filter(
@@ -173,7 +200,21 @@ export function TransactionForm({
 
       <Field label={type === 'income' ? 'From' : type === 'transfer' ? 'Description' : 'Payee'}>
         {(id) => (
-          <input id={id} value={payee} onChange={(e) => setPayee(e.target.value)} maxLength={200} />
+          <>
+            <input
+              id={id}
+              value={payee}
+              onChange={(e) => changePayee(e.target.value)}
+              maxLength={200}
+              list={type === 'transfer' ? undefined : listId}
+              autoComplete="off"
+            />
+            <datalist id={listId}>
+              {suggestions.map((s) => (
+                <option key={s.payee} value={s.payee} />
+              ))}
+            </datalist>
+          </>
         )}
       </Field>
       <Field label="Notes">

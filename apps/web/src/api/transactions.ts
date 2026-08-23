@@ -38,6 +38,22 @@ export async function updateTransaction(
   return (await api.patch<{ transaction: Transaction }>(`/transactions/${id}`, input)).transaction;
 }
 
+export interface PayeeSuggestion {
+  payee: string;
+  categoryId: string | null;
+  uses: number;
+  lastUsed: string;
+}
+
+export async function fetchPayeeSuggestions(
+  q: string,
+  type: 'income' | 'expense',
+): Promise<PayeeSuggestion[]> {
+  return (
+    await api.get<{ payees: PayeeSuggestion[] }>(`/transactions/payees${toQuery({ q, type })}`)
+  ).payees;
+}
+
 export type DateFormat = 'YMD' | 'MDY' | 'DMY';
 
 export interface ImportResult {

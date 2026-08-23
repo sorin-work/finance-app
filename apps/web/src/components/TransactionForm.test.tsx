@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Account, Category } from '../api/types';
@@ -111,6 +111,30 @@ describe('TransactionForm', () => {
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'transfer', transferAccountId: 'savings', categoryId: null }),
     );
+  });
+
+  it('fills in the category of a payee picked from the suggestions', async () => {
+    const suggestPayees = vi
+      .fn()
+      .mockResolvedValue([
+        { payee: 'FreshMart', categoryId: 'groceries', uses: 4, lastUsed: '2026-08-01' },
+      ]);
+    render(
+      <TransactionForm
+        accounts={accounts}
+        categories={categories}
+        submitting={false}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+        suggestPayees={suggestPayees}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText('Payee'), 'Fre');
+    await waitFor(() => expect(suggestPayees).toHaveBeenCalledWith('Fre', 'expense'));
+    await userEvent.type(screen.getByLabelText('Payee'), 'shMart');
+
+    expect(screen.getByLabelText('Category')).toHaveValue('groceries');
   });
 
   it('hides archived accounts', () => {
