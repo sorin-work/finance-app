@@ -115,6 +115,17 @@ describe('reports routes', () => {
       ]);
     });
 
+    it('includes months without transactions as zero', async () => {
+      const res = await agent.get('/api/reports/cashflow?end=2026-09&months=4').expect(200);
+      expect(res.body.months.map((m: { month: string }) => m.month)).toEqual([
+        '2026-06',
+        '2026-07',
+        '2026-08',
+        '2026-09',
+      ]);
+      expect(res.body.months[0]).toEqual({ month: '2026-06', income: 0, expenses: 0, net: 0 });
+    });
+
     it('limits the number of months', async () => {
       await agent.get('/api/reports/cashflow?months=100').expect(400);
     });

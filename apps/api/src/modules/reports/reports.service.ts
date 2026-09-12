@@ -80,6 +80,12 @@ export class ReportsService {
       monthRange(startMonth).start,
       monthRange(endMonth).end,
     );
-    return rows.map((row) => ({ ...row, net: row.income - row.expenses }));
+    // Months without any transactions have no row; report them as zero so
+    // charts keep an evenly spaced time axis.
+    const byMonth = new Map(rows.map((row) => [row.month, row]));
+    return monthsBetween(startMonth, endMonth).map((month) => {
+      const { income = 0, expenses = 0 } = byMonth.get(month) ?? {};
+      return { month, income, expenses, net: income - expenses };
+    });
   }
 }
