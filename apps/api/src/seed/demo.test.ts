@@ -34,6 +34,17 @@ describe('seedDemoData', () => {
 
     const balances = await new AccountsRepository(db).balances(userId);
     expect(balances.size).toBe(5);
+
+    const { rows: rules } = await db.query<{ next_date: string }>(
+      'SELECT next_date::text AS next_date FROM recurring_transactions WHERE user_id = $1',
+      [userId],
+    );
+    expect(rules.length).toBeGreaterThan(0);
+    // Past occurrences are already in the data, so nothing is due today.
+    expect(rules.every((r) => r.next_date > '2026-01-31')).toBe(true);
+
+    const { rows: goals } = await db.query('SELECT 1 FROM goals WHERE user_id = $1', [userId]);
+    expect(goals).toHaveLength(3);
   });
 
   it('does nothing when the demo user already exists', async () => {

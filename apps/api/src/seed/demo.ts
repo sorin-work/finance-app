@@ -1,5 +1,6 @@
 import type { Database, Queryable } from '../db/types.js';
 import {
+  addDays,
   addMonths,
   currentMonth,
   daysInMonth,
@@ -10,6 +11,7 @@ import {
 import { hashPassword } from '../modules/auth/password.js';
 import { CategoriesRepository } from '../modules/categories/categories.repository.js';
 import { DEFAULT_CATEGORIES } from '../modules/categories/defaults.js';
+import { firstOccurrenceOnOrAfter, type Frequency } from '../modules/recurring/schedule.js';
 
 export const DEMO_EMAIL = 'demo@example.com';
 export const DEMO_PASSWORD = 'demo-password';
@@ -54,6 +56,121 @@ const BUDGETS: Record<string, number> = {
   Shopping: 300_00,
   Entertainment: 150_00,
 };
+
+/** The fixed monthly items above, as rules that keep generating them from tomorrow on. */
+const RECURRING: ReadonlyArray<{
+  account: string;
+  to?: string;
+  category?: string;
+  type: 'income' | 'expense' | 'transfer';
+  amount: number;
+  payee: string;
+  frequency: Frequency;
+  day: number;
+}> = [
+  {
+    account: 'checking',
+    category: 'Housing',
+    type: 'expense',
+    amount: 1450_00,
+    payee: 'Parkside Apartments',
+    frequency: 'monthly',
+    day: 1,
+  },
+  {
+    account: 'checking',
+    category: 'Salary',
+    type: 'income',
+    amount: 4200_00,
+    payee: 'Acme Corp',
+    frequency: 'monthly',
+    day: 25,
+  },
+  {
+    account: 'checking',
+    to: 'savings',
+    type: 'transfer',
+    amount: 500_00,
+    payee: 'Monthly savings',
+    frequency: 'monthly',
+    day: 26,
+  },
+  {
+    account: 'checking',
+    category: 'Health',
+    type: 'expense',
+    amount: 39_00,
+    payee: 'Peak Fitness',
+    frequency: 'monthly',
+    day: 2,
+  },
+  {
+    account: 'checking',
+    category: 'Transport',
+    type: 'expense',
+    amount: 85_00,
+    payee: 'Metro transit pass',
+    frequency: 'monthly',
+    day: 1,
+  },
+  {
+    account: 'checking',
+    category: 'Utilities',
+    type: 'expense',
+    amount: 49_99,
+    payee: 'FiberNet Internet',
+    frequency: 'monthly',
+    day: 14,
+  },
+  {
+    account: 'card',
+    category: 'Subscriptions',
+    type: 'expense',
+    amount: 15_49,
+    payee: 'Netflix',
+    frequency: 'monthly',
+    day: 3,
+  },
+  {
+    account: 'card',
+    category: 'Subscriptions',
+    type: 'expense',
+    amount: 11_99,
+    payee: 'Spotify',
+    frequency: 'monthly',
+    day: 6,
+  },
+  {
+    account: 'card',
+    category: 'Subscriptions',
+    type: 'expense',
+    amount: 2_99,
+    payee: 'iCloud',
+    frequency: 'monthly',
+    day: 12,
+  },
+];
+
+/** Savings goals relative to today, so they always look current. */
+function demoGoals(today: string) {
+  return [
+    {
+      name: 'Emergency fund',
+      target: 15000_00,
+      saved: 9200_00,
+      date: addMonths(today, 8),
+      color: '#16a34a',
+    },
+    {
+      name: 'Summer trip',
+      target: 3000_00,
+      saved: 1250_00,
+      date: addMonths(today, 7),
+      color: '#0891b2',
+    },
+    { name: 'New laptop', target: 2200_00, saved: 2200_00, date: null, color: '#7c3aed' },
+  ];
+}
 
 /** Builds a year of realistic transactions ending today. */
 function buildTransactions(today: string, random: () => number): Tx[] {
@@ -362,6 +479,39 @@ export async function seedDemoData(
     }
 
     await insertTransactions(tx, userId, buildTransactions(today, random), accountIds, categoryIds);
+
+    // Recurring rules started a year ago; the seed already wrote their past
+    // occurrences, so each one continues from its next date after today.
+    const firstMonth = shiftMonth(today.slice(0, 7), -11);
+    for (const rule of RECURRING) {
+      const startDate = `${firstMonth}-${String(rule.day).padStart(2, '0')}`;
+      await tx.query(
+        `INSERT INTO recurring_transactions
+           (user_id, account_id, transfer_account_id, category_id, type, amount, payee,
+            frequency, start_date, next_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          userId,
+          accountIds.get(rule.account),
+          rule.to ? accountIds.get(rule.to) : null,
+          rule.category ? categoryIds.get(rule.category) : null,
+          rule.type,
+          rule.amount,
+          rule.payee,
+          rule.frequency,
+          startDate,
+          firstOccurrenceOnOrAfter(startDate, rule.frequency, addDays(today, 1)),
+        ],
+      );
+    }
+
+    for (const goal of demoGoals(today)) {
+      await tx.query(
+        `INSERT INTO goals (user_id, name, target_amount, saved_amount, target_date, color)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [userId, goal.name, goal.target, goal.saved, goal.date, goal.color],
+      );
+    }
 
     const month = today.slice(0, 7);
     for (const m of [shiftMonth(month, -2), shiftMonth(month, -1), month]) {
