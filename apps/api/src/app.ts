@@ -6,6 +6,7 @@ import type { Database } from './db/types.js';
 import type { Logger } from './lib/logger.js';
 import { requireAuth } from './middleware/auth.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import { requestId } from './middleware/request-id.js';
 import { accountsRoutes } from './modules/accounts/accounts.routes.js';
 import { AccountsService } from './modules/accounts/accounts.service.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
@@ -39,6 +40,7 @@ export function createApp({ logger, db, config }: AppDeps) {
   app.use(
     pinoHttp({
       logger,
+      genReqId: requestId,
       autoLogging: { ignore: (req) => req.url === '/api/health' },
     }),
   );

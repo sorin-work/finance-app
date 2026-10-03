@@ -54,6 +54,21 @@ describe('errorHandler', () => {
     expect(res.status).toBe(409);
   });
 
+  it('includes the request id in 500 responses', async () => {
+    const app = express();
+    app.use((req, _res, next) => {
+      req.id = 'req-42';
+      next();
+    });
+    app.get('/boom', () => {
+      throw new Error('kaboom');
+    });
+    app.use(errorHandler);
+
+    const res = await request(app).get('/boom').expect(500);
+    expect(res.body.error.requestId).toBe('req-42');
+  });
+
   it('hides unexpected errors behind a 500', async () => {
     const res = await request(appThatThrows(new Error('secret details'))).post('/boom');
     expect(res.status).toBe(500);
