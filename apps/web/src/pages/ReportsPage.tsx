@@ -6,6 +6,7 @@ import { CashflowChart } from '../components/charts/CashflowChart';
 import { NetWorthChart } from '../components/charts/NetWorthChart';
 import { MonthPicker } from '../components/MonthPicker';
 import { PageHeader } from '../components/PageHeader';
+import { useMonthParam } from '../hooks/useMonthParam';
 import { currentMonth } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 
@@ -15,7 +16,7 @@ export function ReportsPage() {
   const { currency } = useUser();
   const thisMonth = currentMonth();
   const [months, setMonths] = useState<(typeof PERIODS)[number]>(12);
-  const [month, setMonth] = useState(thisMonth);
+  const [month, setMonth] = useMonthParam();
 
   const netWorth = useQuery({
     queryKey: ['reports', 'net-worth', thisMonth, months],

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router';
 import { copyBudgets, deleteBudget, fetchBudgets, saveBudget, type Budget } from '../api/budgets';
 import { ApiError } from '../api/client';
 import type { Category } from '../api/types';
@@ -9,7 +8,8 @@ import { MonthPicker } from '../components/MonthPicker';
 import { PageHeader } from '../components/PageHeader';
 import { ProgressBar } from '../components/ProgressBar';
 import { useCategories } from '../hooks/useCategories';
-import { currentMonth, formatMonth, shiftMonth } from '../lib/dates';
+import { useMonthParam } from '../hooks/useMonthParam';
+import { formatMonth, shiftMonth } from '../lib/dates';
 import { centsToInput, formatMoney, parseMoneyInput } from '../lib/money';
 
 const TONE = { on_track: 'success', warning: 'warning', over: 'danger' } as const;
@@ -161,8 +161,7 @@ function AddBudget({ month, available }: { month: string; available: Category[] 
 
 export function BudgetsPage() {
   const { currency } = useUser();
-  const [params, setParams] = useSearchParams();
-  const month = params.get('month') ?? currentMonth();
+  const [month, setMonth] = useMonthParam();
   const categories = useCategories();
   const queryClient = useQueryClient();
   const budgets = useQuery({ queryKey: ['budgets', month], queryFn: () => fetchBudgets(month) });
@@ -185,7 +184,7 @@ export function BudgetsPage() {
       <PageHeader
         title="Budgets"
         description="Set monthly limits and see how your spending is tracking."
-        actions={<MonthPicker month={month} onChange={(m) => setParams({ month: m })} />}
+        actions={<MonthPicker month={month} onChange={setMonth} />}
       />
 
       {budgets.isError && <div className="alert alert--error">Could not load budgets.</div>}
