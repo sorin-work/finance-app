@@ -128,11 +128,27 @@ export function TransactionsPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
   const hasFilters = FILTER_KEYS.some((key) => params.has(key));
 
-  function signedAmount(t: Transaction) {
-    if (t.type === 'transfer') return formatMoney(t.amount, currency);
-    return formatMoney(t.type === 'income' ? t.amount : -t.amount, currency, {
-      signDisplay: 'always',
-    });
+  /**
+   * Money in is positive, money out negative. A transfer has no direction on
+   * its own, but when the list is filtered to one account it is either coming
+   * into that account or leaving it.
+   */
+  function signedCents(t: Transaction): number | null {
+    if (t.type === 'income') return t.amount;
+    if (t.type === 'expense') return -t.amount;
+    if (!filters.accountId) return null;
+    return t.transferAccountId === filters.accountId ? t.amount : -t.amount;
+  }
+
+  function amountCell(t: Transaction) {
+    const signed = signedCents(t);
+    return {
+      text:
+        signed === null
+          ? formatMoney(t.amount, currency)
+          : formatMoney(signed, currency, { signDisplay: 'always' }),
+      className: signed === null ? '' : signed > 0 ? 'positive' : 'negative',
+    };
   }
 
   return (
@@ -286,11 +302,7 @@ export function TransactionsPage() {
                     {accountName.get(t.accountId)}
                     {t.transferAccountId && ` → ${accountName.get(t.transferAccountId)}`}
                   </td>
-                  <td
-                    className={`num nowrap ${t.type === 'income' ? 'positive' : t.type === 'expense' ? 'negative' : ''}`}
-                  >
-                    {signedAmount(t)}
-                  </td>
+                  <td className={`num nowrap ${amountCell(t).className}`}>{amountCell(t).text}</td>
                 </tr>
               );
             })}
