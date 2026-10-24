@@ -53,6 +53,42 @@ describe('categories routes', () => {
     await agent.post('/api/categories').send({ name: 'Groceries', kind: 'income' }).expect(201);
   });
 
+  it('leaves transactions uncategorized and drops budgets when a category is deleted', async () => {
+    const { agent } = await signUp(app);
+    const account = (await agent.post('/api/accounts').send({ name: 'Main', type: 'checking' }))
+      .body.account;
+    const { category } = (
+      await agent.post('/api/categories').send({ name: 'Hobbies', kind: 'expense' })
+    ).body;
+    const { transaction } = (
+      await agent.post('/api/transactions').send({
+        accountId: account.id,
+        categoryId: category.id,
+        type: 'expense',
+        amount: 25_00,
+        date: '2026-10-05',
+      })
+    ).body;
+    await agent
+      .put('/api/budgets')
+      .send({ categoryId: category.id, month: '2026-10', amount: 100_00 })
+      .expect(200);
+
+    await agent.delete(`/api/categories/${category.id}`).expect(204);
+
+    const after = await agent.get(`/api/transactions/${transaction.id}`).expect(200);
+    expect(after.body.transaction.categoryId).toBeNull();
+    expect((await agent.get('/api/budgets?month=2026-10')).body.budgets).toEqual([]);
+  });
+
+  it('does not allow changing the kind of a category', async () => {
+    const { agent } = await signUp(app);
+    const { category } = (
+      await agent.post('/api/categories').send({ name: 'Side gig', kind: 'income' })
+    ).body;
+    await agent.patch(`/api/categories/${category.id}`).send({ kind: 'expense' }).expect(400);
+  });
+
   it('validates colors', async () => {
     const { agent } = await signUp(app);
     await agent

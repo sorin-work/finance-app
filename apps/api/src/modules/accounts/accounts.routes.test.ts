@@ -88,6 +88,47 @@ describe('accounts routes', () => {
     expect(blocked.body.error.message).toBe('"Old" is archived');
   });
 
+  it('treats an account used by a recurring rule as in use', async () => {
+    const { agent } = await signUp(app);
+    const { account } = (
+      await agent.post('/api/accounts').send({ name: 'Bills', type: 'checking' })
+    ).body;
+    await agent
+      .post('/api/recurring')
+      .send({
+        accountId: account.id,
+        type: 'expense',
+        amount: 10_00,
+        frequency: 'monthly',
+        startDate: '2030-01-01',
+      })
+      .expect(201);
+
+    await agent.delete(`/api/accounts/${account.id}`).expect(409);
+  });
+
+  it('recomputes the balance when the opening balance changes', async () => {
+    const { agent } = await signUp(app);
+    const { account } = (
+      await agent
+        .post('/api/accounts')
+        .send({ name: 'Visa', type: 'credit_card', openingBalance: -450_00 })
+    ).body;
+    expect(account.balance).toBe(-450_00);
+
+    const res = await agent
+      .patch(`/api/accounts/${account.id}`)
+      .send({ openingBalance: -300_00 })
+      .expect(200);
+    expect(res.body.account.balance).toBe(-300_00);
+  });
+
+  it('rejects empty updates', async () => {
+    const { agent } = await signUp(app);
+    const { account } = (await agent.post('/api/accounts').send({ name: 'A', type: 'cash' })).body;
+    await agent.patch(`/api/accounts/${account.id}`).send({}).expect(400);
+  });
+
   it('does not expose other users accounts', async () => {
     const alice = await signUp(app);
     const bob = await signUp(app);
