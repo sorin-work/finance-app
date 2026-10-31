@@ -14,7 +14,7 @@ import {
 } from '../api/transactions';
 import type { Transaction, TransactionType } from '../api/types';
 import { useUser } from '../auth/AuthContext';
-import { PlusIcon } from '../components/icons';
+import { PlusIcon, RepeatIcon } from '../components/icons';
 import { ImportDialog } from '../components/ImportDialog';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
@@ -285,6 +285,12 @@ export function TransactionsPage() {
                   <td>
                     <div className="cell-title">
                       {t.payee || (t.type === 'transfer' ? 'Transfer' : '—')}
+                      {t.recurringId && (
+                        <span className="recurring-mark" title="Added by a recurring rule">
+                          <RepeatIcon width={14} height={14} />
+                          <span className="visually-hidden">Recurring</span>
+                        </span>
+                      )}
                     </div>
                     {t.notes && <div className="cell-sub">{t.notes}</div>}
                   </td>

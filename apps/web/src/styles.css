@@ -1502,3 +1502,19 @@ input:disabled {
   place-items: center;
   min-height: 40vh;
 }
+
+.recurring-mark {
+  display: inline-flex;
+  margin-left: 6px;
+  color: var(--text-muted);
+  vertical-align: -2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -19,6 +19,7 @@ export interface TransactionRow {
   date: string;
   payee: string;
   notes: string;
+  recurring_id: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -33,6 +34,8 @@ export interface Transaction {
   date: string;
   payee: string;
   notes: string;
+  /** The recurring rule that created this transaction, if any. */
+  recurringId: string | null;
   createdAt: string;
 }
 
@@ -47,6 +50,7 @@ export function toTransaction(row: TransactionRow): Transaction {
     date: row.date,
     payee: row.payee,
     notes: row.notes,
+    recurringId: row.recurring_id,
     createdAt: row.created_at.toISOString(),
   };
 }

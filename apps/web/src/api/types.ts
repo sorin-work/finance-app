@@ -41,6 +41,7 @@ export interface Transaction {
   date: string;
   payee: string;
   notes: string;
+  recurringId: string | null;
   createdAt: string;
 }
 

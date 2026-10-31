@@ -128,6 +128,9 @@ describe('recurring transactions', () => {
 
       const list = await agent.get('/api/recurring');
       expect(list.body.recurring[0].nextDate).toBe('2026-04-10');
+
+      const generated = await agent.get('/api/transactions?from=2026-01-01&to=2026-01-31');
+      expect(generated.body.items[0].recurringId).toBe(recurring.id);
     });
 
     it('keeps rules that start on the 31st on the last day of the month', async () => {
