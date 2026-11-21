@@ -544,3 +544,105 @@ accounts it is not.
 - Balances: a monthly balance table maintained on write, or a materialised view refreshed after
   writes. Both make writes more complex; only do this if the measurement says so.
 - Tests: the timing test, kept out of the default run if it is slow.
+
+## Maybe
+
+### 28. Several currencies
+
+The currency is a setting on the user (`users.currency`), and every account and amount is in it.
+Someone with a euro account and a dollar card cannot represent that, and a holiday abroad is
+entered after converting by hand.
+
+- A currency per account; transfers between currencies carry both amounts; reports convert to the
+  user's main currency with rates the user enters or imports (no rate service required).
+- This touches almost every query that sums amounts, which is why it is a Maybe. If it happens,
+  it should be first among the account items, because items 16, 29 and 30 would all need to know
+  about it.
+- Tests: conversion as pure functions; route tests for a transfer between currencies and a report
+  across two.
+
+### 29. Investments: holdings and prices
+
+An investment account is a balance like any other. Tracking units of a fund or shares, their
+prices and gains needs holdings, trades and prices. Item 16 (balance updates) covers most of what
+a personal budget needs; this goes further and grows the app into a portfolio tracker, which may
+be a different app.
+
+- `holdings` and `trades` per investment account, prices entered or imported from CSV, value and
+  gain per holding.
+- Tests: pure functions for cost basis and gains.
+
+### 30. Loans with interest
+
+A loan account goes down by the payments entered. The split of a payment into interest and
+principal, the remaining term and the effect of overpaying are worked out elsewhere.
+
+- Loan details on the account (rate, term, payment day), an amortisation table, and recurring
+  payments that split into interest (an expense) and principal (a transfer).
+- Tests: amortisation as a pure function against known schedules.
+
+### 31. Receipts and attachments
+
+Photos of receipts and warranty documents next to the transaction.
+
+- Files stored on a volume (`UPLOAD_DIR`), served only to their owner, size and type limits,
+  thumbnails made in the browser.
+- The cost is storage, backups (item 24) and the export (item 18), which all grow. That is why it
+  is a Maybe.
+- Tests: route tests for upload limits and access by another user.
+
+### 32. A shared household
+
+Everything is scoped by `user_id`. Two people sharing a household budget either share a login or
+keep two separate apps.
+
+- Households that own accounts, categories and budgets, with members who all see them; per-user
+  private accounts stay possible.
+- Every query changes from "owned by the user" to "in a household the user belongs to". That is
+  the whole data layer, hence Maybe, and it should come with tests that one household never sees
+  another's data.
+
+### 33. Personal API tokens
+
+`requireAuth` already accepts a bearer token "for scripts", but the only tokens are login
+sessions, which expire after a week and carry full access.
+
+- Named tokens created in settings, shown once, stored hashed, with an optional expiry and a
+  read-only option, listed and revocable next to the sessions from item 1.
+- Tests: route tests for a read-only token refused on writes, and a revoked one refused.
+
+### 34. Translations
+
+The dates and amounts already use `Intl` with the browser's locale (`apps/web/src/lib/money.ts`,
+`dates.ts`), but every label and message is in English, including API error messages.
+
+- `react-i18next` for the web app; the API keeps stable error codes (it already sends `code`) and
+  the web app translates by code instead of showing `message`.
+- Tests: a check that every key exists in each language.
+
+### 35. Installable app
+
+Entering a cash expense right after paying is the moment people forget it.
+
+- A manifest and a service worker so the app can be installed and opens fast; a quick "add
+  expense" screen.
+- Undecided: queueing transactions entered offline. Useful, but it brings conflicts and
+  duplicates; I would start with online only.
+- Tests: the quick add form; the service worker is checked by hand.
+
+### 36. Rate limits shared by several instances
+
+The architecture notes say the recurring timer is safe with several API instances
+(`FOR UPDATE SKIP LOCKED`), but `middleware/rate-limit.ts` keeps its counts in memory, so with two
+instances an attacker gets twice the attempts. A table in PostgreSQL (one row per key and window)
+is enough. This matters only to someone who runs more than one instance, hence Maybe.
+
+- Tests: the limiter against PGlite with two app instances.
+
+### 37. A metrics endpoint
+
+Logs are JSON with request ids (pino), which covers debugging. There is nothing to watch over
+time: request rates and latencies, recurring runs and how many they created, failed logins.
+
+- `prom-client` with `/metrics` on a separate port that nginx does not forward, off by default.
+- Tests: a route test that the endpoint is not reachable through the API port.
