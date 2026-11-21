@@ -112,6 +112,7 @@ docs/                  API reference and architecture notes
 
 - [docs/api.md](docs/api.md): every endpoint, request body and response
 - [docs/architecture.md](docs/architecture.md): how the pieces fit together
+- [ROADMAP.md](ROADMAP.md): ideas for what could come next
 
 ## Configuration
 
